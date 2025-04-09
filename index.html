@@ -814,7 +814,7 @@
                 }
             });
 
-            // Funkcja do tworzenia nowego panelu kraju
+            // Funkcja do tworzenia nowego panelu kraju (poprawiona)
             function createCountryPanel(country, x, y) {
                 // Klonowanie szablonu
                 const template = document.getElementById('country-panel-template');
@@ -838,6 +838,7 @@
                 
                 // Obsługa przycisku zamknięcia
                 panel.querySelector('.panel-close').addEventListener('click', function() {
+                    console.log("Zamykanie panelu:", country);
                     panel.remove();
                 });
                 
@@ -854,7 +855,11 @@
 
             // Obsługa kliknięcia na region mapy - tworzenie nowego panelu
             polygonSeries.mapPolygons.template.events.on("click", function(ev) {
-                const country = ev.target.dataItem.dataContext.id;
+                const dataItem = ev.target.dataItem;
+                const country = dataItem.dataContext.id;
+                const name = dataItem.dataContext.name;
+                
+                console.log("Kliknięto kraj:", country, name);
                 
                 // Sprawdzenie, czy kraj ma dane indeksu
                 if (extendedMarketIndexes[country]) {
@@ -863,10 +868,18 @@
                     
                     if (existingPanel) {
                         // Jeśli istnieje, to go pokazujemy i przesuwamy na wierzch
+                        existingPanel.style.display = 'block';
                         existingPanel.style.zIndex = "1000";
                     } else {
                         // Tworzenie nowego panelu
-                        const panel = createCountryPanel(country, ev.point.x, ev.point.y);
+                        // Pobierz pozycję kliknięcia na ekranie
+                        const x = ev.originalEvent ? ev.originalEvent.clientX : window.innerWidth / 2;
+                        const y = ev.originalEvent ? ev.originalEvent.clientY : window.innerHeight / 2;
+                        
+                        console.log("Pozycja panelu:", x, y);
+                        
+                        // Tworzenie nowego panelu
+                        const panel = createCountryPanel(country, x, y);
                         
                         // Ładowanie danych dla danego kraju
                         loadMarketIndexes(country, panel.querySelector('.country-content'));
