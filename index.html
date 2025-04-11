@@ -513,7 +513,7 @@
                 <div class="search-tab active" data-engine="google">Google</div>
                 <div class="search-tab" data-engine="perplexity">Perplexity</div>
             </div>
-            <form id="search-form" action="https://www.google.com/search" method="GET">
+            <form id="search-form" action="https://www.google.com/search" method="GET" target="_blank">
                 <input type="text" name="q" class="search-input" placeholder="Wyszukaj w Google...">
             </form>
         </div>
@@ -600,8 +600,9 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            am5.ready(function() { // Początek funkcji dla am5.ready
-                try { // <-- Dodano blok try
+            const searchForm = document.getElementById('search-form');
+            am5.ready(function() {
+                try {
                     // Obsługa wyszukiwarki i przełączania między Google a Perplexity
                     const searchInput = document.getElementById('search-input');
                     const searchTabs = document.querySelectorAll('.search-tab');
@@ -856,7 +857,23 @@
                         KE: [{ symbol: 'NSE20.NR', name: 'NSE 20', flag: '🇰🇪' }],
                         IL: [{ symbol: 'TA35.TA', name: 'TA-35', flag: '🇮🇱' }],
                         TR: [{ symbol: 'XU100.IS', name: 'BIST 100', flag: '🇹🇷' }],
-                        PL: [{ symbol: 'WIG20.WA', name: 'WIG20', flag: '🇵🇱' }]
+                        PL: [{ symbol: 'WIG20.WA', name: 'WIG20', flag: '🇵🇱' }],
+                        // -- Dodane kraje --
+                        CH: [{ symbol: '^SSMI', name: 'SMI', flag: '🇨🇭' }], // Szwajcaria
+                        NL: [{ symbol: '^AEX', name: 'AEX', flag: '🇳🇱' }], // Holandia
+                        SE: [{ symbol: '^OMX', name: 'OMX Stockholm 30', flag: '🇸🇪' }], // Szwecja
+                        MX: [{ symbol: '^MXX', name: 'IPC MEXICO', flag: '🇲🇽' }], // Meksyk
+                        SG: [{ symbol: '^STI', name: 'Straits Times Index', flag: '🇸🇬' }], // Singapur
+                        TW: [{ symbol: '^TWII', name: 'TSEC Weighted Index', flag: '🇹🇼' }], // Tajwan
+                        NZ: [{ symbol: '^NZ50', name: 'NZX 50', flag: '🇳🇿' }], // Nowa Zelandia
+                        AR: [{ symbol: '^MERV', name: 'MERVAL', flag: '🇦🇷' }], // Argentyna
+                        CL: [{ symbol: '^IPSA', name: 'S&P CLX IPSA', flag: '🇨🇱' }], // Chile
+                        ID: [{ symbol: '^JKSE', name: 'Jakarta Composite', flag: '🇮🇩' }], // Indonezja
+                        MY: [{ symbol: '^KLSE', name: 'FTSE Bursa Malaysia KLCI', flag: '🇲🇾' }], // Malezja
+                        TH: [{ symbol: '^SET.BK', name: 'SET Index', flag: '🇹🇭' }], // Tajlandia
+                        SA: [{ symbol: '^TASI.SR', name: 'Tadawul All Share', flag: '🇸🇦' }], // Arabia Saudyjska
+                        AE: [{ symbol: '^DFMGI.AE', name: 'DFM General Index', flag: '🇦🇪' }], // ZEA
+                        PT: [{ symbol: '^PSI20.LS', name: 'PSI 20', flag: '🇵🇹' }] // Portugalia
                     };
 
                     // Dodanie nazw krajów dla wszystkich regionów
@@ -896,6 +913,31 @@
                                 polygon.set("tooltipText", name);
                                 polygon.set("toggleKey", "active");
                                 polygon.set("interactive", true);
+                                
+                                // PRZENIESIONO: Obsługa kliknięcia dla tego konkretnego polygonu
+                                polygon.events.on("click", function(ev) {
+                                    const clickedCountry = ev.target.dataItem.get("id");
+                                    const clickedName = ev.target.dataItem.get("name");
+                                    console.log("Kliknięto kraj (pojedynczy handler):", clickedCountry, clickedName);
+                                    
+                                    if (extendedMarketIndexes[clickedCountry]) {
+                                        const existingPanel = document.getElementById(`panel-${clickedCountry}`);
+                                        if (existingPanel) {
+                                            existingPanel.style.display = 'block';
+                                            existingPanel.style.zIndex = "1000";
+                                        } else {
+                                            const panelX = panelStartX + (openPanelCount % 10) * panelOffsetX;
+                                            const panelY = panelStartY + (openPanelCount % 10) * panelOffsetY;
+                                            console.log("Tworzę panel na pozycji:", panelX, panelY);
+                                            const panel = createCountryPanel(clickedCountry, panelX, panelY);
+                                            openPanelCount++;
+                                            loadMarketIndexes(clickedCountry, panel.querySelector('.country-content'));
+                                            saveOpenPanelsState();
+                                        }
+                                    } else {
+                                        alert(`Brak danych indeksów dla kraju: ${regions[clickedCountry]?.name || clickedCountry}`);
+                                    }
+                                });
                             }
                             
                             colorIndex = (colorIndex + 1) % 15; // Cykliczne używanie 15 kolorów
@@ -903,47 +945,10 @@
                         
                         console.log("Zainicjalizowano " + Object.keys(regions).length + " regionów");
                         
-                        // Obsługa kliknięcia na region mapy - tworzenie nowego panelu
-                        polygonSeries.mapPolygons.template.events.on("click", function(ev) {
-                            const dataItem = ev.target.dataItem;
-                            const country = dataItem.dataContext.id;
-                            const name = dataItem.dataContext.name;
-                            
-                            console.log("Kliknięto kraj:", country, name);
-                            
-                            // Sprawdzenie, czy kraj ma dane indeksu
-                            if (extendedMarketIndexes[country]) {
-                                // Sprawdzenie, czy panel dla tego kraju już istnieje
-                                const existingPanel = document.getElementById(`panel-${country}`);
-                                
-                                if (existingPanel) {
-                                    // Jeśli istnieje, to go pokazujemy i przesuwamy na wierzch
-                                    existingPanel.style.display = 'block';
-                                    existingPanel.style.zIndex = "1000";
-                                } else {
-                                    // Obliczenie pozycji w układzie kaskadowym
-                                    const panelX = panelStartX + (openPanelCount % 10) * panelOffsetX;
-                                    const panelY = panelStartY + (openPanelCount % 10) * panelOffsetY;
-                                    
-                                    console.log("Tworzę panel na pozycji:", panelX, panelY);
-                                    
-                                    // Tworzenie nowego panelu z uporządkowaną pozycją
-                                    const panel = createCountryPanel(country, panelX, panelY);
-                                    
-                                    // Inkrementacja licznika otwartych paneli
-                                    openPanelCount++;
-                                    
-                                    // Ładowanie danych dla danego kraju
-                                    loadMarketIndexes(country, panel.querySelector('.country-content'));
-                                    
-                                    // Zapisanie stanu otwartych paneli do localStorage
-                                    saveOpenPanelsState();
-                                }
-                            } else {
-                                // Kraj bez danych - pokazujemy krótką informację
-                                alert(`Brak danych indeksów dla kraju: ${regions[country]?.name || country}`);
-                            }
-                        });
+                        // USUNIĘTO: Ogólny handler kliknięcia z szablonu - przeniesiono do pętli powyżej
+                        /* polygonSeries.mapPolygons.template.events.on("click", function(ev) {
+                            // ... stary kod ...
+                        }); */
                     });
 
                     // Funkcja do zapisywania i odtwarzania stanu otwartych paneli
@@ -1012,12 +1017,10 @@
                         panel.style.top = `${y}px`;
                         panel.style.display = 'block';
                         panel.id = `panel-${country}`;
-                        panel.dataset.country = country;
+                        panel.dataset.country = country; // Zapisz kod kraju w atrybucie data-
                         
-                        // Ustawienie nazwy kraju w tytule - z zabezpieczeniem przed undefined
-                        const countryName = regions[country] && regions[country].name ? 
-                                           regions[country].name : 
-                                           `Kraj: ${country}`;
+                        // Ustawienie pełnej nazwy kraju w tytule - używamy danych z obiektu `regions`
+                        const countryName = regions[country]?.name || `Kraj: ${country}`; // Użyj pełnej nazwy lub skrótu jako fallback
                         panel.querySelector('.panel-title').textContent = countryName;
                         
                         // Dodanie do body
@@ -1125,174 +1128,176 @@
                         };
                     }
 
-                    // Pobieranie danych Bitcoin z CoinGecko (poprawione - zawsze używa mocków)
+                    // Pobieranie danych Bitcoin z CoinGecko (Główne API)
                     async function fetchBitcoinDataCoinGecko() {
+                        const endpoint = config.bitcoin.primary.endpoint;
+                        console.log("Próba połączenia z głównym API Bitcoin:", endpoint);
                         try {
-                            console.log("Próba połączenia z API CoinGecko");
+                            const response = await fetch(endpoint);
+                            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                            const data = await response.json();
                             
-                            // W środowisku GitHub Pages używamy zawsze mocków, żeby uniknąć CORS
-                            // i problemów z limitami API
-                            
-                            // Mockowe dane dla demonstracji
-                            const price = 67450.32;
-                            const change24h = 2.45;
-                            
+                            const price = data.market_data?.current_price?.usd;
+                            const change1h = data.market_data?.price_change_percentage_1h_in_currency?.usd;
+                            const change24h = data.market_data?.price_change_percentage_24h_in_currency?.usd;
+                            const change7d = data.market_data?.price_change_percentage_7d_in_currency?.usd;
+                            const change30d = data.market_data?.price_change_percentage_30d_in_currency?.usd;
+                            const dominance = data.market_data?.market_cap_percentage?.btc; // CoinGecko nie zwraca % bezpośrednio, a w market_cap_percentage
+
+                            if (price === undefined || change24h === undefined) {
+                                throw new Error('Niekompletne dane z CoinGecko');
+                            }
+
                             btcPrice.textContent = formatPrice(price);
+                            const changeFormatted24h = formatChange(change24h);
+                            priceChange.textContent = `${changeFormatted24h.text} (24h)`;
+                            priceChange.className = `price-change ${changeFormatted24h.class}`;
+
+                            // Aktualizacja innych danych (zabezpieczona przed undefined)
+                            const intervals = [change1h, change7d, change30d];
+                            intervals.forEach((change, index) => {
+                                if (change !== undefined && change !== null) {
+                                    const formatted = formatChange(change);
+                                    dataValues[index].textContent = formatted.text;
+                                    dataValues[index].className = `data-value ${formatted.class}`;
+                                } else {
+                                    dataValues[index].textContent = "N/A";
+                                    dataValues[index].className = "data-value";
+                                }
+                            });
+
+                            if (dominance !== undefined && dominance !== null) {
+                                dataValues[3].textContent = `${dominance.toFixed(2)}%`;
+                            } else {
+                                dataValues[3].textContent = "N/A";
+                            }
+
+                            // Pobranie opłat transakcyjnych (oddzielna funkcja)
+                            fetchTransactionFees(price);
                             
-                            const changeFormatted = formatChange(change24h);
-                            priceChange.textContent = `${changeFormatted.text} (24h)`;
-                            priceChange.className = `price-change ${changeFormatted.class}`;
-                            
-                            // Aktualizacja innych danych
-                            const dataPoints = [0.34, 5.62, 12.74, 52.8];
-                            
-                            // Zmiana 1h
-                            const change1hFormatted = formatChange(dataPoints[0]);
-                            dataValues[0].textContent = change1hFormatted.text;
-                            dataValues[0].className = `data-value ${change1hFormatted.class}`;
-                            
-                            // Zmiana 7d
-                            const change7dFormatted = formatChange(dataPoints[1]);
-                            dataValues[1].textContent = change7dFormatted.text;
-                            dataValues[1].className = `data-value ${change7dFormatted.class}`;
-                            
-                            // Zmiana 30d
-                            const change30dFormatted = formatChange(dataPoints[2]);
-                            dataValues[2].textContent = change30dFormatted.text;
-                            dataValues[2].className = `data-value ${change30dFormatted.class}`;
-                            
-                            // Dominacja BTC
-                            dataValues[3].textContent = `${dataPoints[3].toFixed(2)}%`;
-                            
-                            // Aktualizacja czasu ostatniego odświeżenia
                             updateLastRefreshTime();
-                            
-                            // Symulacja danych o kosztach transakcji
-                            dataValues[4].textContent = `25 sat/vB ($${(0.00000025 * price * 250).toFixed(2)})`;
-                            
                             return true;
                         } catch (error) {
-                            console.error('Błąd pobierania danych Bitcoin:', error);
-                            
-                            // Wyświetl informację o błędzie zamiast nieprawidłowych danych
-                            btcPrice.textContent = "Błąd pobierania danych";
-                            btcPrice.style.fontSize = "18px";
-                            priceChange.textContent = "Spróbuj później";
+                            console.error('Błąd pobierania danych Bitcoin (CoinGecko):', error);
+                            // Wyświetl tylko błąd dla ceny i zmiany 24h
+                            btcPrice.textContent = "Błąd API";
+                            priceChange.textContent = "N/A";
                             priceChange.className = "price-change";
-                            
-                            // Aktualizacja pozostałych pól z informacją o błędzie
-                            dataValues.forEach(value => {
-                                value.textContent = "Brak danych";
-                                value.className = "data-value";
+                            // Pozostałe pola ustaw na N/A
+                            [0, 1, 2, 3, 4].forEach(i => {
+                                dataValues[i].textContent = "N/A";
+                                dataValues[i].className = "data-value";
                             });
-                            
-                            // Aktualizacja czasu ostatniej próby
-                            updateLastRefreshTime("Błąd pobierania danych");
-                            
+                            updateLastRefreshTime("Błąd API Bitcoin");
                             return false;
                         }
                     }
 
-                    // Pobieranie danych Bitcoin z zapasowego API (poprawione - zawsze używa mocków)
-                    async function fetchBitcoinDataCoinAPI() {
+                    // Pobieranie danych Bitcoin z CoinCap (Zapasowe API)
+                    async function fetchBitcoinDataCoinCap() {
+                        const endpoint = 'https://api.coincap.io/v2/assets/bitcoin';
+                        console.log("Próba połączenia z zapasowym API Bitcoin:", endpoint);
                         try {
-                            console.log("Próba połączenia z API CoinAPI");
+                            const response = await fetch(endpoint);
+                            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                            const result = await response.json();
+                            const data = result.data;
+
+                            const price = parseFloat(data?.priceUsd);
+                            const change24h = parseFloat(data?.changePercent24Hr);
+
+                            if (isNaN(price) || isNaN(change24h)) {
+                                throw new Error('Niekompletne dane z CoinCap');
+                            }
+
+                            btcPrice.textContent = formatPrice(price);
+                            const changeFormatted24h = formatChange(change24h);
+                            priceChange.textContent = `${changeFormatted24h.text} (24h)`;
+                            priceChange.className = `price-change ${changeFormatted24h.class}`;
+
+                            // API CoinCap nie dostarcza łatwo innych interwałów ani dominacji
+                            dataValues[0].textContent = "N/A"; // 1h
+                            dataValues[1].textContent = "N/A"; // 7d
+                            dataValues[2].textContent = "N/A"; // 30d
+                            dataValues[3].textContent = "N/A"; // Dominance
+                            dataValues[0].className = "data-value";
+                            dataValues[1].className = "data-value";
+                            dataValues[2].className = "data-value";
+                            dataValues[3].className = "data-value";
                             
-                            // Mockowe dane dla demonstracji
-                            const mockData = {
-                                price_usd: 67230.45,
-                                change_24h: -1.12,
-                                change_1h: -0.22,
-                                change_7d: 4.35,
-                                change_30d: 11.27
-                            };
-                            
-                            // Aktualizacja ceny i zmiany
-                            btcPrice.textContent = formatPrice(mockData.price_usd);
-                            
-                            const changeFormatted = formatChange(mockData.change_24h);
-                            priceChange.textContent = `${changeFormatted.text} (24h)`;
-                            priceChange.className = `price-change ${changeFormatted.class}`;
-                            
-                            // Aktualizacja innych danych
-                            // Zmiana 1h
-                            const change1hFormatted = formatChange(mockData.change_1h);
-                            dataValues[0].textContent = change1hFormatted.text;
-                            dataValues[0].className = `data-value ${change1hFormatted.class}`;
-                            
-                            // Zmiana 7d
-                            const change7dFormatted = formatChange(mockData.change_7d);
-                            dataValues[1].textContent = change7dFormatted.text;
-                            dataValues[1].className = `data-value ${change7dFormatted.class}`;
-                            
-                            // Zmiana 30d
-                            const change30dFormatted = formatChange(mockData.change_30d);
-                            dataValues[2].textContent = change30dFormatted.text;
-                            dataValues[2].className = `data-value ${change30dFormatted.class}`;
-                            
-                            // Dominacja BTC (z mocka)
-                            dataValues[3].textContent = "51.94%";
-                            
-                            // Symulacja danych o kosztach transakcji
-                            dataValues[4].textContent = `18 sat/vB ($${(0.00000018 * mockData.price_usd * 250).toFixed(2)})`;
-                            
-                            updateLastRefreshTime();
+                            // Pobranie opłat transakcyjnych (nadal próbujemy)
+                            fetchTransactionFees(price); 
+
+                            updateLastRefreshTime(); // Użyjemy nazwy z config dla źródła
                             return true;
                         } catch (error) {
-                            console.error('Błąd pobierania danych Bitcoin z zapasowego API:', error);
-                            
-                            // Wyświetl informację o błędzie zamiast nieprawidłowych danych
-                            btcPrice.textContent = "Błąd pobierania danych";
-                            btcPrice.style.fontSize = "18px";
-                            priceChange.textContent = "Spróbuj później";
+                            console.error('Błąd pobierania danych Bitcoin (CoinCap):', error);
+                            // W razie błędu drugiego API, wyświetlamy błąd
+                            btcPrice.textContent = "Błąd API";
+                            priceChange.textContent = "N/A";
                             priceChange.className = "price-change";
-                            
-                            // Aktualizacja pozostałych pól z informacją o błędzie
-                            dataValues.forEach(value => {
-                                value.textContent = "Brak danych";
-                                value.className = "data-value";
+                            [0, 1, 2, 3, 4].forEach(i => {
+                                dataValues[i].textContent = "N/A";
+                                dataValues[i].className = "data-value";
                             });
-                            
-                            // Aktualizacja czasu ostatniej próby
-                            updateLastRefreshTime("Błąd pobierania danych");
-                            
+                            updateLastRefreshTime("Błąd API Bitcoin");
                             return false;
                         }
                     }
+                    
+                    // Pobieranie opłat transakcyjnych z Mempool.space
+                    async function fetchTransactionFees(currentBtcPrice) {
+                         const endpoint = 'https://mempool.space/api/v1/fees/recommended';
+                         try {
+                            const response = await fetch(endpoint);
+                            if (!response.ok) throw new Error('Mempool API error');
+                            const fees = await response.json();
+                            const feeRate = fees.halfHourFee; // sat/vB for medium priority
+                            
+                            if (feeRate && !isNaN(feeRate) && currentBtcPrice && !isNaN(currentBtcPrice)) {
+                                const costUSD = (feeRate / 100000000) * currentBtcPrice * 140; // Szacunkowy koszt dla typowej transakcji (140 vBytes)
+                                dataValues[4].textContent = `${feeRate.toFixed(0)} sat/vB ($${costUSD.toFixed(2)})`;
+                            } else {
+                                dataValues[4].textContent = "N/A";
+                            }
+                         } catch (error) {
+                             console.error('Błąd pobierania opłat transakcyjnych:', error);
+                             dataValues[4].textContent = "Błąd API Feerate";
+                         }
+                    }
 
-                    // Pobieranie danych Fear & Greed Index (poprawione - zawsze używa mocków)
+                    // Pobieranie danych Fear & Greed Index (Real API)
                     async function fetchFearGreedIndex() {
+                        const endpoint = config.fearGreed.endpoint;
+                        console.log("Próba pobierania danych Fear & Greed Index:", endpoint);
                         try {
-                            console.log("Próba pobierania danych Fear & Greed Index");
+                            const response = await fetch(endpoint);
+                            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                            const data = await response.json();
                             
-                            // Używamy mocka z demonstracyjnymi danymi
-                            const value = 65;
-                            const valueClassification = "Chciwość";
-                            
+                            const value = parseInt(data?.data?.[0]?.value);
+                            const valueClassification = data?.data?.[0]?.value_classification;
+
+                            if (isNaN(value) || !valueClassification) {
+                                throw new Error('Niekompletne dane Fear & Greed');
+                            }
+
                             // Aktualizacja wartości i pozycji wskaźnika
                             fearGreedValue.textContent = `${value} (${valueClassification})`;
-                            
-                            // Pozycja wskaźnika na skali (0-100)
                             const position = Math.max(0, Math.min(100, value));
                             fearGreedIndicator.style.left = `${position}%`;
-                            
-                            // Ustawienie koloru wskaźnika w zależności od wartości
-                            if (value <= 25) {
-                                fearGreedValue.style.color = '#FF3B30';
-                            } else if (value <= 45) {
-                                fearGreedValue.style.color = '#FF9500';
-                            } else if (value <= 55) {
-                                fearGreedValue.style.color = '#FFCC00';
-                            } else if (value <= 75) {
-                                fearGreedValue.style.color = '#9BDB1D';
-                            } else {
-                                fearGreedValue.style.color = '#4CD964';
-                            }
+
+                            // Ustawienie koloru wskaźnika
+                             if (value <= 25) fearGreedValue.style.color = '#FF3B30';
+                             else if (value <= 45) fearGreedValue.style.color = '#FF9500';
+                             else if (value <= 55) fearGreedValue.style.color = '#FFCC00';
+                             else if (value <= 75) fearGreedValue.style.color = '#9BDB1D';
+                             else fearGreedValue.style.color = '#4CD964';
                             
                             return true;
                         } catch (error) {
                             console.error('Błąd pobierania danych Fear & Greed:', error);
-                            fearGreedValue.textContent = 'Błąd pobierania danych';
+                            fearGreedValue.textContent = 'Błąd API';
                             fearGreedValue.style.color = 'var(--text-secondary)';
                             fearGreedIndicator.style.left = "50%";
                             fearGreedIndicator.style.background = "gray";
@@ -1377,7 +1382,16 @@
 
                     // Zmodyfikowana funkcja fetchBitcoinData korzystająca z handleAPIError
                     async function fetchBitcoinData() {
-                        return await handleAPIError('bitcoin', fetchBitcoinDataCoinGecko, fetchBitcoinDataCoinAPI);
+                        let success;
+                        if (config.bitcoin.currentApi === 'primary') {
+                            success = await fetchBitcoinDataCoinGecko();
+                        } else {
+                            // Zmieniamy nazwę funkcji zapasowej w config, jeśli trzeba
+                            config.bitcoin.secondary.name = 'CoinCap'; 
+                            bitcoinApiSource.textContent = config.bitcoin.secondary.name;
+                            success = await fetchBitcoinDataCoinCap();
+                        }
+                        return success;
                     }
 
                     // Dodanie animacji pulsowania do ceny Bitcoin
@@ -1462,46 +1476,56 @@
                     // Odtworzenie zapisanego stanu otwartych paneli
                     loadOpenPanelsState();
 
-                    // Zmodyfikowana funkcja ładowania danych indeksów giełdowych z interwałami czasowymi
+                    // Zmodyfikowana funkcja ładowania danych indeksów giełdowych z Yahoo Finance (nieoficjalne API)
                     async function loadMarketIndexes(country, contentElement) {
                         const indexes = extendedMarketIndexes[country] || [];
                         
                         if (!contentElement) {
-                            console.error('Brak elementu docelowego');
+                            console.error('Brak elementu docelowego dla indeksów');
                             return;
                         }
                         
                         if (indexes.length === 0) {
-                            contentElement.innerHTML = `<p>Brak danych dla tego regionu</p>`;
+                            contentElement.innerHTML = `<p>Brak skonfigurowanych indeksów dla ${country}</p>`;
                             return;
                         }
                         
-                        contentElement.innerHTML = `<div class="loading"></div><p>Ładowanie danych...</p>`;
+                        contentElement.innerHTML = `<div class="loading"></div><p>Ładowanie danych indeksów...</p>`;
+                        const symbolList = indexes.map(index => index.symbol).join(',');
+                        const endpoint = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${symbolList}`;
                         
                         try {
-                            console.log("Próba pobierania danych indeksów dla kraju:", country);
+                            console.log("Pobieranie danych indeksów dla:", country, "z", endpoint);
+                            const response = await fetch(endpoint);
+                            if (!response.ok || !response.headers.get("content-type")?.includes("application/json")) {
+                                throw new Error(`Problem z API Yahoo Finance: Status ${response.status}`);
+                            }
+                            const data = await response.json();
                             
-                            // Na GitHub Pages używamy zawsze danych mockowych
-                            // aby uniknąć problemów z CORS i limitami API
+                            if (!data?.quoteResponse?.result) {
+                                throw new Error('Nieprawidłowa odpowiedź z API Yahoo Finance');
+                            }
+                            const results = data.quoteResponse.result;
                             
                             let html = `<div class="index-list">`;
                             
                             indexes.forEach((index, idx) => {
-                                // Generujemy realistic mockowe dane dla każdego indeksu
-                                const mockPrice = ((10000 + Math.random() * 4000) * (1 + (idx / 10))).toFixed(2);
+                                const marketData = results.find(r => r.symbol === index.symbol);
                                 
-                                // Generujemy realistic mockowe dane dla interwałów
-                                const randomChange = (value) => {
-                                    const sign = Math.random() > 0.5 ? 1 : -1;
-                                    return sign * (Math.random() * value).toFixed(2);
-                                };
+                                let price = "Błąd danych"; // Domyślny tekst błędu, jeśli nie ma danych
+                                let change1D = { text: "N/A", class: "" };
                                 
-                                const intervals = {
-                                    "1D": formatChange(randomChange(2)),
-                                    "1T": formatChange(randomChange(5)),
-                                    "1M": formatChange(randomChange(10)),
-                                    "YTD": formatChange(randomChange(15))
-                                };
+                                if (marketData && marketData.regularMarketPrice !== undefined && marketData.regularMarketPrice !== null) {
+                                    price = formatPrice(marketData.regularMarketPrice);
+                                    if (marketData.regularMarketChangePercent !== undefined && marketData.regularMarketChangePercent !== null) {
+                                        change1D = formatChange(marketData.regularMarketChangePercent);
+                                    } else {
+                                         change1D = { text: "N/A", class: "" }; // Jeśli brakuje zmiany %
+                                    }
+                                } else {
+                                     price = "Brak danych"; // Jeśli nie znaleziono danych dla symbolu
+                                     change1D = { text: "N/A", class: "" };
+                                }
                                 
                                 html += `
                                     <div class="index-item">
@@ -1509,85 +1533,51 @@
                                             <span class="index-flag">${index.flag}</span>
                                             <span class="index-name">${index.name}</span>
                                         </div>
-                                        <div class="index-price">${mockPrice}</div>
+                                        <div class="index-price">${price}</div>
                                         <div class="index-intervals">
-                                            <div class="interval-grid">
+                                            <div class="interval-grid" style="grid-template-columns: 1fr;"> <!-- Zmieniono na 1 kolumnę -->
                                                 <div class="interval-item">
-                                                    <span class="interval-label">1D:</span>
-                                                    <span class="interval-value ${intervals["1D"].class}">${intervals["1D"].text}</span>
+                                                    <span class="interval-label">Zmiana (1D):</span> <!-- Zmieniono etykietę -->
+                                                    <span class="interval-value ${change1D.class}">${change1D.text}</span>
                                                 </div>
-                                                <div class="interval-item">
-                                                    <span class="interval-label">1T:</span>
-                                                    <span class="interval-value ${intervals["1T"].class}">${intervals["1T"].text}</span>
-                                                </div>
-                                                <div class="interval-item">
-                                                    <span class="interval-label">1M:</span>
-                                                    <span class="interval-value ${intervals["1M"].class}">${intervals["1M"].text}</span>
-                                                </div>
-                                                <div class="interval-item">
-                                                    <span class="interval-label">YTD:</span>
-                                                    <span class="interval-value ${intervals["YTD"].class}">${intervals["YTD"].text}</span>
-                                                </div>
+                                                <!-- Usunięto interwały 1T, 1M, YTD -->
                                             </div>
                                         </div>
                                     </div>
                                 `;
                             });
                             
-                            html += `</div><div class="data-source">Dane demonstracyjne | ${getCurrentTime()}</div>`;
-                            
+                            html += `</div><div class="data-source">Dane: Yahoo Finance | ${getCurrentTime()}</div>`;
                             contentElement.innerHTML = html;
+                            
                         } catch (error) {
-                            console.error('Błąd pobierania danych indeksów:', error);
-                            
-                            // Wyświetlamy komunikat o błędzie ale z przykładowymi danymi mockowymi
-                            // żeby użytkownik miał jakieś dane do obejrzenia
+                            console.error(`Błąd pobierania danych indeksów (${country}):`, error);
                             let html = `<div class="index-list">`;
-                            
-                            indexes.forEach((index, idx) => {
+                            indexes.forEach((index) => {
                                 html += `
                                     <div class="index-item">
                                         <div class="index-header">
                                             <span class="index-flag">${index.flag}</span>
                                             <span class="index-name">${index.name}</span>
                                         </div>
-                                        <div class="index-price">Przykładowe dane</div>
+                                        <div class="index-price">Błąd API</div>
                                         <div class="index-intervals">
-                                            <div class="interval-grid">
-                                                <div class="interval-item">
-                                                    <span class="interval-label">1D:</span>
-                                                    <span class="interval-value ${Math.random() > 0.5 ? 'positive' : 'negative'}">${Math.random() > 0.5 ? '+' : '-'}${(Math.random() * 2).toFixed(2)}%</span>
-                                                </div>
-                                                <div class="interval-item">
-                                                    <span class="interval-label">1T:</span>
-                                                    <span class="interval-value ${Math.random() > 0.5 ? 'positive' : 'negative'}">${Math.random() > 0.5 ? '+' : '-'}${(Math.random() * 5).toFixed(2)}%</span>
-                                                </div>
-                                                <div class="interval-item">
-                                                    <span class="interval-label">1M:</span>
-                                                    <span class="interval-value ${Math.random() > 0.5 ? 'positive' : 'negative'}">${Math.random() > 0.5 ? '+' : '-'}${(Math.random() * 8).toFixed(2)}%</span>
-                                                </div>
-                                                <div class="interval-item">
-                                                    <span class="interval-label">YTD:</span>
-                                                    <span class="interval-value ${Math.random() > 0.5 ? 'positive' : 'negative'}">${Math.random() > 0.5 ? '+' : '-'}${(Math.random() * 12).toFixed(2)}%</span>
-                                                </div>
+                                            <div class="interval-grid" style="grid-template-columns: 1fr;">
+                                                <div class="interval-item"><span class="interval-label">Zmiana (1D):</span><span class="interval-value">N/A</span></div>
                                             </div>
                                         </div>
                                     </div>
                                 `;
                             });
-                            
-                            html += `</div><div class="data-source">Dane demonstracyjne | ${getCurrentTime()}</div>`;
-                            
+                            html += `</div><div class="data-source">Błąd API Indeksów | ${getCurrentTime()}</div>`;
                             contentElement.innerHTML = html;
                         }
                     }
 
-                    // Funkcja generująca przykładowe dane zmiany dla różnych interwałów czasowych
-                    // Tylko do celów demonstracyjnych, w produkcji zastąpić prawdziwymi danymi
-                    function generateIntervalChange(seed, intervalType) {
-                        // W domyślnej implementacji pokazujemy komunikat o braku danych
-                        return { text: "Brak danych", class: "" };
-                    }
+                    // Funkcja generująca przykładowe dane zmiany dla różnych interwałów czasowych - JUŻ NIE UŻYWANA
+                    // function generateIntervalChange(seed, intervalType) {
+                    //     return { text: "Brak danych", class: "" };
+                    // }
                 } catch (error) { // <-- Dodano blok catch
                     console.error("Błąd krytyczny podczas inicjalizacji amCharts i logiki aplikacji:", error);
                     // Wyświetl użytkownikowi komunikat o błędzie krytycznym
