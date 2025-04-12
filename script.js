@@ -1,122 +1,42 @@
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', () => {
     const searchForm = document.getElementById('search-form'); 
-    am5.ready(function() { 
+    
+    // Elementy DOM (definiowane raz na początku dla wydajności)
+    const btcPriceElement = document.querySelector('.btc-price');
+    const priceChangeElement = document.querySelector('.price-change');
+    const dataValueElements = document.querySelectorAll('.data-value');
+    const fearGreedValueElement = document.querySelector('.fear-greed-value');
+    const fearGreedIndicatorElement = document.querySelector('.fear-greed-indicator');
+    const bitcoinApiSourceElement = document.getElementById('bitcoin-api-source');
+    const bitcoinApiToggleElement = document.getElementById('bitcoin-api-toggle');
+    const dataSourceElement = document.querySelector('.data-source');
+    const searchInputElement = document.getElementById('search-input');
+    const searchTabsElements = document.querySelectorAll('.search-tab');
+    const bitcoinPanelElement = document.querySelector('.bitcoin-panel');
+    const searchWrapperElement = document.querySelector(".search-wrapper");
+    const countryPanelTemplate = document.getElementById('country-panel-template');
+
+    am5.ready(() => { 
         try { 
-            // Obsługa wyszukiwarki i przełączania między Google a Perplexity
-            const searchInput = document.getElementById('search-input');
-            const searchTabs = document.querySelectorAll('.search-tab');
-            
-            searchTabs.forEach(tab => {
-                tab.addEventListener('click', function() {
-                    searchTabs.forEach(t => t.classList.remove('active'));
-                    this.classList.add('active');
-                    const engine = this.dataset.engine;
-                    if (engine === 'google') {
-                        searchForm.action = 'https://www.google.com/search';
-                        searchInput.placeholder = 'Wyszukaj w Google...';
-                    } else if (engine === 'perplexity') {
-                        searchForm.action = 'https://www.perplexity.ai/search';
-                        searchInput.placeholder = 'Zapytaj Perplexity...';
-                    }
-                });
-            });
+            // --- Konfiguracja --- 
+            const config = {
+                bitcoin: {
+                    primary: { name: 'CoinGecko', endpoint: 'https://api.coingecko.com/api/v3/coins/bitcoin?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false', refreshInterval: 30000 },
+                    secondary: { name: 'CoinCap', endpoint: 'https://api.coincap.io/v2/assets/bitcoin', refreshInterval: 10000 },
+                    currentApi: 'primary'
+                },
+                markets: { /* Nieaktywne */ },
+                fearGreed: { endpoint: 'https://api.alternative.me/fng/', refreshInterval: 600000 },
+                fees: { endpoint: 'https://mempool.space/api/v1/fees/recommended' }
+            };
 
-            // Inicjalizacja mapy i logiki aplikacji...
-            // Nowa, uproszczona funkcja do obsługi przeciągania paneli
-            function makeDraggable(elmnt) {
-                const header = elmnt.querySelector('.panel-header') || elmnt;
-                let dragStartX, dragStartY, initialX, initialY;
-                let active = false;
-                
-                const dragStart = function(e) {
-                    if (e.type === "touchstart") {
-                        dragStartX = e.touches[0].clientX;
-                        dragStartY = e.touches[0].clientY;
-                    } else {
-                        dragStartX = e.clientX;
-                        dragStartY = e.clientY;
-                    }
-                    initialX = elmnt.offsetLeft;
-                    initialY = elmnt.offsetTop;
-                    active = true;
-                    elmnt.style.zIndex = "1000";
-                    if (e.type === "touchstart") {
-                        document.addEventListener("touchmove", drag, { passive: false });
-                        document.addEventListener("touchend", dragEnd, { passive: false });
-                    } else {
-                        document.addEventListener("mousemove", drag);
-                        document.addEventListener("mouseup", dragEnd);
-                    }
-                    if (e.cancelable) e.preventDefault();
-                };
-                
-                const drag = function(e) {
-                    if (!active) return;
-                    if (e.cancelable) e.preventDefault();
-                    let currentX, currentY;
-                    if (e.type === "touchmove") {
-                        currentX = e.touches[0].clientX;
-                        currentY = e.touches[0].clientY;
-                    } else {
-                        currentX = e.clientX;
-                        currentY = e.clientY;
-                    }
-                    const dx = currentX - dragStartX;
-                    const dy = currentY - dragStartY;
-                    requestAnimationFrame(() => {
-                        elmnt.style.left = (initialX + dx) + "px";
-                        elmnt.style.top = (initialY + dy) + "px";
-                    });
-                };
-                
-                const dragEnd = function() {
-                    document.removeEventListener("mousemove", drag);
-                    document.removeEventListener("mouseup", dragEnd);
-                    document.removeEventListener("touchmove", drag);
-                    document.removeEventListener("touchend", dragEnd);
-                    active = false;
-                    saveOpenPanelsState();
-                };
-                
-                header.addEventListener("mousedown", dragStart);
-                header.addEventListener("touchstart", dragStart, { passive: false });
-            }
+            const GhibliPalette = [
+                '#8EC0E4', '#94C9B3', '#D8A76A', '#F3C45F', '#D69A9C',
+                '#8D7357', '#95A78D', '#C1B5A3', '#DBC376', '#A2C0D9',
+                '#E1AD9B', '#7B8881', '#CEB888', '#93AAC5', '#B5BDAF'
+            ];
 
-            function getGhibliColor(index) {
-                const ghibliPalette = [
-                    '#8EC0E4', '#94C9B3', '#D8A76A', '#F3C45F', '#D69A9C',
-                    '#8D7357', '#95A78D', '#C1B5A3', '#DBC376', '#A2C0D9',
-                    '#E1AD9B', '#7B8881', '#CEB888', '#93AAC5', '#B5BDAF'
-                ];
-                return index < ghibliPalette.length ? ghibliPalette[index] : ghibliPalette[Math.floor(Math.random() * ghibliPalette.length)];
-            }
-
-            let root = am5.Root.new("chartdiv");
-            root.setThemes([
-                am5themes_Animated.new(root),
-                am5themes_Dark.new(root)
-            ]);
-
-            let chart = root.container.children.push(
-                am5map.MapChart.new(root, {
-                    panX: "rotateX", panY: "rotateY",
-                    projection: am5map.geoOrthographic(),
-                    paddingBottom: 20, paddingTop: 20, paddingLeft: 20, paddingRight: 20,
-                    backgroundSeries: { mapPolygons: { fill: am5.color(0x1e1e1e), stroke: am5.color(0x333333), strokeWidth: 0.5 } }
-                })
-            );
-
-            let polygonSeries = chart.series.push(
-                am5map.MapPolygonSeries.new(root, { geoJSON: am5geodata_worldLow, exclude: ["AQ"] })
-            );
-
-            polygonSeries.mapPolygons.template.setAll({
-                tooltipText: "{name}", toggleKey: "active", interactive: true, fill: am5.color(0x3b3b3b)
-            });
-
-            polygonSeries.mapPolygons.template.states.create("hover", { fill: am5.color(0x546c8c) });
-
-            const extendedMarketIndexes = {
+            const ExtendedMarketIndexes = {
                 US: [{ symbol: '^DJI', name: 'Dow Jones', flag: '🇺🇸' }, { symbol: '^SPX', name: 'S&P 500', flag: '🇺🇸' }, { symbol: '^IXIC', name: 'NASDAQ', flag: '🇺🇸' }, { symbol: '^RUT', name: 'Russell 2000', flag: '🇺🇸' }, { symbol: '^NYA', name: 'NYSE Composite', flag: '🇺🇸' }],
                 GB: [{ symbol: '^FTSE', name: 'FTSE 100', flag: '🇬🇧' }, { symbol: '^FTMC', name: 'FTSE 250', flag: '🇬🇧' }, { symbol: '^FTAI', name: 'FTSE AIM All-Share', flag: '🇬🇧' }],
                 DE: [{ symbol: '^GDAXI', name: 'DAX', flag: '🇩🇪' }, { symbol: '^MDAXI', name: 'MDAX', flag: '🇩🇪' }, { symbol: '^SDAXI', name: 'SDAX', flag: '🇩🇪' }],
@@ -136,30 +56,302 @@ document.addEventListener('DOMContentLoaded', function() {
                 PT: [{ symbol: '^PSI20.LS', name: 'PSI 20', flag: '🇵🇹' }]
             };
 
-            const regions = {};
+            let regions = {};
             let colorIndex = 0;
+            let openPanelCount = 0;
+            const panelStartX = 50;
+            const panelStartY = 100;
+            const panelOffsetX = 25;
+            const panelOffsetY = 25;
+            let lastBtcPrice = null; // Do animacji flash
+            const konamiCodeSequence = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'];
+            let konamiCodeIndex = 0;
 
-            polygonSeries.events.on("datavalidated", function() {
+            // --- Funkcje Pomocnicze ---
+            const formatPrice = (price) => 
+                new Intl.NumberFormat('pl-PL', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(price);
+
+            const formatChange = (change) => {
+                if (change === undefined || change === null || isNaN(change)) return { text: "N/A", class: "" };
+                const formatted = change > 0 ? `+${change.toFixed(2)}%` : `${change.toFixed(2)}%`;
+                return { text: formatted, class: change >= 0 ? 'positive' : 'negative' };
+            };
+
+            const getCurrentTime = () => new Date().toLocaleTimeString('pl-PL');
+
+            const getGhibliColor = (index) => {
+                const palette = GhibliPalette; // Użyj zdefiniowanej palety
+                return index < palette.length ? palette[index] : palette[Math.floor(Math.random() * palette.length)];
+            };
+            
+            // Funkcja pomocnicza do obsługi błędów API i aktualizacji UI
+            const handleFetchError = (uiElements, errorMsg, dataSourceMsg, error) => {
+                console.error(errorMsg, error);
+                if (uiElements.price) uiElements.price.textContent = "Błąd API";
+                if (uiElements.change) {
+                    uiElements.change.textContent = "N/A";
+                    uiElements.change.className = "price-change"; // Reset klasy
+                }
+                if (uiElements.values) {
+                    uiElements.values.forEach(el => {
+                        el.textContent = "N/A";
+                        el.className = "data-value"; // Reset klasy
+                    });
+                }
+                if (uiElements.fearGreed) {
+                    uiElements.fearGreed.value.textContent = 'Błąd API';
+                    uiElements.fearGreed.value.style.color = 'var(--text-secondary)';
+                    uiElements.fearGreed.indicator.style.left = "50%";
+                    uiElements.fearGreed.indicator.style.background = "gray";
+                }
+                if (uiElements.marketIndexList) {
+                    let html = `<div class="index-list">`;
+                    uiElements.marketIndexList.indexes.forEach(index => {
+                         html += `<div class="index-item">
+                                     <div class="index-header"><span class="index-flag">${index.flag}</span><span class="index-name">${index.name}</span></div>
+                                     <div class="index-price">Błąd API</div>
+                                     <div class="index-intervals"><div class="interval-grid" style="grid-template-columns: 1fr;"><div class="interval-item"><span class="interval-label">Zmiana (1D):</span><span class="interval-value">N/A</span></div></div></div>
+                                 </div>`;
+                    });
+                     html += `</div><div class="data-source">${dataSourceMsg} | ${getCurrentTime()}</div>`;
+                     uiElements.marketIndexList.contentElement.innerHTML = html;
+                }
+                 if (dataSourceElement) {
+                    updateLastRefreshTime(dataSourceMsg); // Użyj globalnej funkcji do aktualizacji źródła
+                 }
+            };
+            
+            const updateLastRefreshTime = (errorMessage = null) => {
+                 if (!dataSourceElement) return; // Dodatkowe zabezpieczenie
+                const sourceName = config.bitcoin.currentApi === 'primary' ? config.bitcoin.primary.name : config.bitcoin.secondary.name;
+                if (errorMessage) dataSourceElement.textContent = `${errorMessage} | ${getCurrentTime()}`;
+                else dataSourceElement.textContent = `Źródło: ${sourceName} | Ostatnia aktualizacja: ${getCurrentTime()}`;
+            };
+            
+            // --- Funkcje API ---
+            const fetchBitcoinDataCoinGecko = async () => {
+                const endpoint = config.bitcoin.primary.endpoint;
+                console.log("Próba połączenia z głównym API Bitcoin:", endpoint);
+                try {
+                    const response = await fetch(endpoint);
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status} ${await response.text()}`); // Dodaj tekst błędu
+                    const data = await response.json();
+                    const price = data.market_data?.current_price?.usd;
+                    const change1h = data.market_data?.price_change_percentage_1h_in_currency?.usd;
+                    const change24h = data.market_data?.price_change_percentage_24h_in_currency?.usd;
+                    const change7d = data.market_data?.price_change_percentage_7d_in_currency?.usd;
+                    const change30d = data.market_data?.price_change_percentage_30d_in_currency?.usd;
+                    const dominance = data.market_data?.market_cap_percentage?.btc; 
+                    if (price === undefined || change24h === undefined) throw new Error('Niekompletne dane z CoinGecko');
+                    
+                    // Aktualizacja UI
+                    btcPriceElement.textContent = formatPrice(price);
+                    const changeFormatted24h = formatChange(change24h);
+                    priceChangeElement.textContent = `${changeFormatted24h.text} (24h)`;
+                    priceChangeElement.className = `price-change ${changeFormatted24h.class}`;
+                    const intervals = [change1h, change7d, change30d];
+                    intervals.forEach((change, index) => {
+                        const formatted = formatChange(change); 
+                        dataValueElements[index].textContent = formatted.text;
+                        dataValueElements[index].className = `data-value ${formatted.class}`;
+                    });
+                    dataValueElements[3].textContent = dominance !== undefined ? `${dominance.toFixed(2)}%` : "N/A";
+                    dataValueElements[3].className = "data-value"; // Reset klasy dla dominacji
+                    
+                    fetchTransactionFees(price); // Pobierz opłaty
+                    updateLastRefreshTime();
+                    return true;
+                } catch (error) {
+                    handleFetchError(
+                         { price: btcPriceElement, change: priceChangeElement, values: dataValueElements },
+                         'Błąd pobierania danych Bitcoin (CoinGecko):', 
+                         'Błąd API Bitcoin', 
+                         error
+                    );
+                    return false;
+                }
+            };
+
+            const fetchBitcoinDataCoinCap = async () => {
+                const endpoint = config.bitcoin.secondary.endpoint;
+                console.log("Próba połączenia z zapasowym API Bitcoin:", endpoint);
+                try {
+                    const response = await fetch(endpoint);
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status} ${await response.text()}`);
+                    const result = await response.json();
+                    const data = result.data;
+                    const price = parseFloat(data?.priceUsd);
+                    const change24h = parseFloat(data?.changePercent24Hr);
+                    if (isNaN(price) || isNaN(change24h)) throw new Error('Niekompletne dane z CoinCap');
+                    
+                    // Aktualizacja UI
+                    btcPriceElement.textContent = formatPrice(price);
+                    const changeFormatted24h = formatChange(change24h);
+                    priceChangeElement.textContent = `${changeFormatted24h.text} (24h)`;
+                    priceChangeElement.className = `price-change ${changeFormatted24h.class}`;
+                    [0, 1, 2, 3].forEach(i => { dataValueElements[i].textContent = "N/A"; dataValueElements[i].className = "data-value"; }); // CoinCap nie ma tych danych
+                    
+                    fetchTransactionFees(price); // Pobierz opłaty
+                    updateLastRefreshTime();
+                    return true;
+                } catch (error) {
+                     handleFetchError(
+                         { price: btcPriceElement, change: priceChangeElement, values: dataValueElements },
+                         'Błąd pobierania danych Bitcoin (CoinCap):', 
+                         'Błąd API Bitcoin', 
+                         error
+                    );
+                    return false;
+                }
+            };
+            
+            const fetchTransactionFees = async (currentBtcPrice) => {
+                 const endpoint = config.fees.endpoint;
+                 try {
+                    const response = await fetch(endpoint);
+                    if (!response.ok) throw new Error(`Mempool API error: Status ${response.status} ${await response.text()}`);
+                    const fees = await response.json();
+                    const feeRate = fees.halfHourFee;
+                    if (feeRate && !isNaN(feeRate) && currentBtcPrice && !isNaN(currentBtcPrice)) {
+                        const costUSD = (feeRate / 100000000) * currentBtcPrice * 140;
+                        dataValueElements[4].textContent = `${feeRate.toFixed(0)} sat/vB ($${costUSD.toFixed(2)})`;
+                    } else dataValueElements[4].textContent = "N/A";
+                 } catch (error) {
+                     console.error('Błąd pobierania opłat transakcyjnych:', error);
+                     dataValueElements[4].textContent = "Błąd API Fee";
+                 }
+            };
+
+            const fetchFearGreedIndex = async () => {
+                const endpoint = config.fearGreed.endpoint;
+                console.log("Próba pobierania danych Fear & Greed Index:", endpoint);
+                try {
+                    const response = await fetch(endpoint);
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status} ${await response.text()}`);
+                    const data = await response.json();
+                    const value = parseInt(data?.data?.[0]?.value);
+                    const valueClassification = data?.data?.[0]?.value_classification;
+                    if (isNaN(value) || !valueClassification) throw new Error('Niekompletne dane Fear & Greed');
+                    
+                    // Aktualizacja UI
+                    fearGreedValueElement.textContent = `${value} (${valueClassification})`;
+                    const position = Math.max(0, Math.min(100, value));
+                    fearGreedIndicatorElement.style.left = `${position}%`;
+                    let color = 'var(--text-secondary)'; // Domyślny kolor
+                    if (value <= 25) color = '#FF3B30';
+                    else if (value <= 45) color = '#FF9500';
+                    else if (value <= 55) color = '#FFCC00';
+                    else if (value <= 75) color = '#9BDB1D';
+                    else if (value > 75) color = '#4CD964';
+                    fearGreedValueElement.style.color = color;
+                    fearGreedIndicatorElement.style.background = color; // Ustaw kolor wskaźnika
+                    
+                    return true;
+                } catch (error) {
+                     handleFetchError(
+                         { fearGreed: { value: fearGreedValueElement, indicator: fearGreedIndicatorElement } },
+                         'Błąd pobierania danych Fear & Greed:', 
+                         'Błąd API F&G', 
+                         error
+                     );
+                    return false;
+                }
+            };
+
+            const loadMarketIndexes = async (country, contentElement) => {
+                const indexes = ExtendedMarketIndexes[country] || [];
+                if (!contentElement) { console.error('Brak elementu docelowego dla indeksów'); return; }
+                if (indexes.length === 0) { contentElement.innerHTML = `<p>Brak skonfigurowanych indeksów dla ${country}</p>`; return; }
+                
+                contentElement.innerHTML = `<div class="loading"></div><p>Ładowanie danych indeksów...</p>`;
+                const symbolList = indexes.map(index => index.symbol).join(',');
+                const endpoint = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${symbolList}`;
+                
+                try {
+                    console.log("Pobieranie danych indeksów dla:", country, "z", endpoint);
+                    const response = await fetch(endpoint);
+                    if (!response.ok || !response.headers.get("content-type")?.includes("application/json")) {
+                        throw new Error(`Problem z API Yahoo Finance: Status ${response.status} ${await response.text()}`); // Dodaj tekst błędu
+                    }
+                    const data = await response.json();
+                    if (!data?.quoteResponse?.result) throw new Error('Nieprawidłowa odpowiedź z API Yahoo Finance');
+                    const results = data.quoteResponse.result;
+                    
+                    let html = `<div class="index-list">`;
+                    indexes.forEach((index) => {
+                        const marketData = results.find(r => r.symbol === index.symbol);
+                        let price = "Brak danych";
+                        let change1D = { text: "N/A", class: "" };
+                        if (marketData && marketData.regularMarketPrice !== undefined && marketData.regularMarketPrice !== null) {
+                            price = formatPrice(marketData.regularMarketPrice);
+                            change1D = formatChange(marketData.regularMarketChangePercent);
+                        }
+                        html += `<div class="index-item">
+                                     <div class="index-header"><span class="index-flag">${index.flag}</span><span class="index-name">${index.name}</span></div>
+                                     <div class="index-price">${price}</div>
+                                     <div class="index-intervals"><div class="interval-grid" style="grid-template-columns: 1fr;"><div class="interval-item"><span class="interval-label">Zmiana (1D):</span><span class="interval-value ${change1D.class}">${change1D.text}</span></div></div></div>
+                                 </div>`;
+                    });
+                    html += `</div><div class="data-source">Dane: Yahoo Finance | ${getCurrentTime()}</div>`;
+                    contentElement.innerHTML = html;
+                } catch (error) {
+                     handleFetchError(
+                        { marketIndexList: { contentElement: contentElement, indexes: indexes } },
+                        `Błąd pobierania danych indeksów (${country}):`, 
+                        'Błąd API Indeksów', 
+                        error
+                     );
+                }
+            };
+            
+            // --- Inicjalizacja Mapy --- 
+            let root = am5.Root.new("chartdiv");
+            root.setThemes([am5themes_Animated.new(root), am5themes_Dark.new(root)]);
+
+            let chart = root.container.children.push(
+                am5map.MapChart.new(root, {
+                    panX: "rotateX", panY: "rotateY",
+                    projection: am5map.geoOrthographic(),
+                    paddingBottom: 20, paddingTop: 20, paddingLeft: 20, paddingRight: 20,
+                    backgroundSeries: { mapPolygons: { fill: am5.color(0x1e1e1e), stroke: am5.color(0x333333), strokeWidth: 0.5 } }
+                })
+            );
+
+            let polygonSeries = chart.series.push(
+                am5map.MapPolygonSeries.new(root, { geoJSON: am5geodata_worldLow, exclude: ["AQ"] })
+            );
+
+            polygonSeries.mapPolygons.template.setAll({
+                 tooltipText: "{name}", toggleKey: "active", interactive: true, fill: am5.color(0x3b3b3b)
+            });
+
+            polygonSeries.mapPolygons.template.states.create("hover", { fill: am5.color(0x546c8c) });
+
+            polygonSeries.events.on("datavalidated", () => {
                 console.log("Mapa została w pełni załadowana - inicjalizuję regiony");
-                am5.array.each(polygonSeries.dataItems, function(dataItem) {
-                    const country = dataItem.get("id");
+                regions = {}; // Resetuj regiony na wszelki wypadek
+                colorIndex = 0;
+                am5.array.each(polygonSeries.dataItems, (dataItem) => {
+                    const countryId = dataItem.get("id");
                     const name = dataItem.get("name");
-                    regions[country] = { name: name, color: getGhibliColor(colorIndex) };
+                    regions[countryId] = { name: name, color: getGhibliColor(colorIndex) };
                     const polygon = dataItem.get("mapPolygon");
                     if (polygon) {
-                        polygon.set("fill", am5.color(getGhibliColor(colorIndex)));
-                        if (["US", "GB", "DE", "RU", "CN", "JP", "AU"].includes(country)) {
+                        polygon.set("fill", am5.color(regions[countryId].color)); // Użyj zapisanego koloru
+                        if (["US", "GB", "DE", "RU", "CN", "JP", "AU"].includes(countryId)) {
                             polygon.set("strokeWidth", 0.5);
                             polygon.set("stroke", am5.color(0xFFFFFF, 0.5));
                         }
                         polygon.set("tooltipText", name);
-                        polygon.set("toggleKey", "active");
-                        polygon.set("interactive", true);
-                        polygon.events.on("click", function(ev) {
+                        polygon.set("interactive", true); // Upewnij się, że interaktywność jest włączona
+                        
+                        // Dodaj listener kliknięcia do każdego polygonu
+                        polygon.events.on("click", (ev) => {
                             const clickedCountryId = ev.target.dataItem.get("id"); 
                             const clickedName = regions[clickedCountryId]?.name || `Kraj: ${clickedCountryId}`;
                             console.log("Kliknięto kraj (pojedynczy handler):", clickedCountryId, clickedName); 
-                            if (extendedMarketIndexes[clickedCountryId]) { 
+                            
+                            if (ExtendedMarketIndexes[clickedCountryId]) { 
                                 const existingPanel = document.getElementById(`panel-${clickedCountryId}`); 
                                 if (existingPanel) {
                                     existingPanel.style.display = 'block';
@@ -174,16 +366,19 @@ document.addEventListener('DOMContentLoaded', function() {
                                     saveOpenPanelsState();
                                 }
                             } else {
-                                alert(`Brak danych indeksów dla kraju: ${clickedName}`);
+                                alert(`Brak skonfigurowanych indeksów dla kraju: ${clickedName}`);
                             }
                         });
                     }
-                    colorIndex = (colorIndex + 1) % 15;
+                    colorIndex = (colorIndex + 1) % GhibliPalette.length; // Użyj długości palety
                 });
                 console.log("Zainicjalizowano " + Object.keys(regions).length + " regionów");
             });
+            
+            chart.animate({ key: "rotationX", from: 0, to: 360, duration: 30000, loops: Infinity });
 
-            function saveOpenPanelsState() {
+            // --- Zarządzanie Stanem Paneli ---
+            const saveOpenPanelsState = () => {
                 try {
                     const openPanels = [];
                     document.querySelectorAll('.country-panel').forEach(panel => {
@@ -194,269 +389,181 @@ document.addEventListener('DOMContentLoaded', function() {
                     localStorage.setItem('openPanels', JSON.stringify(openPanels));
                     console.log('Zapisano stan paneli:', openPanels.length, 'otwartych paneli');
                 } catch (error) { console.error('Błąd podczas zapisywania stanu paneli:', error); }
-            }
+            };
             
-            function loadOpenPanelsState() {
+            const loadOpenPanelsState = () => {
                 try {
                     const savedPanels = localStorage.getItem('openPanels');
                     if (!savedPanels) return;
                     const panelsData = JSON.parse(savedPanels);
                     console.log('Wczytano dane o panelach:', panelsData.length, 'do odtworzenia');
                     panelsData.forEach(panelData => {
-                        if (extendedMarketIndexes[panelData.country]) {
+                        if (ExtendedMarketIndexes[panelData.country]) {
                             const panel = createCountryPanel(panelData.country, parseInt(panelData.left) || panelStartX, parseInt(panelData.top) || panelStartY);
                             loadMarketIndexes(panelData.country, panel.querySelector('.country-content'));
                             openPanelCount++;
                         }
                     });
                 } catch (error) { console.error('Błąd podczas odtwarzania paneli:', error); }
-            }
+            };
             
-            function createCountryPanel(country, x, y) {
-                const template = document.getElementById('country-panel-template');
-                const panel = document.importNode(template.content, true).querySelector('.country-panel');
+            const createCountryPanel = (countryId, x, y) => {
+                if (!countryPanelTemplate) return null; // Zabezpieczenie
+                const panelNode = document.importNode(countryPanelTemplate.content, true);
+                const panel = panelNode.querySelector('.country-panel');
+                
                 panel.style.left = `${x}px`;
                 panel.style.top = `${y}px`;
                 panel.style.display = 'block';
-                panel.id = `panel-${country}`;
-                panel.dataset.country = country;
-                const countryName = regions[country]?.name || `Kraj: ${country}`;
+                panel.id = `panel-${countryId}`;
+                panel.dataset.country = countryId;
+                const countryName = regions[countryId]?.name || `Kraj: ${countryId}`;
                 panel.querySelector('.panel-title').textContent = countryName;
+                
                 document.body.appendChild(panel);
-                makeDraggable(panel);
-                panel.querySelector('.panel-close').addEventListener('click', function() {
-                    console.log("Zamykanie panelu:", country);
+                makeDraggable(panel); // Użyj globalnej funkcji
+                
+                panel.querySelector('.panel-close').addEventListener('click', () => {
+                    console.log("Zamykanie panelu:", countryId);
                     panel.remove();
                     saveOpenPanelsState();
                 });
                 VanillaTilt.init(panel, { max: 5, speed: 400, glare: true, "max-glare": 0.2 });
                 return panel;
-            }
-
-            let openPanelCount = 0;
-            const panelStartX = 50;
-            const panelStartY = 100;
-            const panelOffsetX = 25;
-            const panelOffsetY = 25;
-
-            chart.animate({ key: "rotationX", from: 0, to: 360, duration: 30000, loops: Infinity });
-
-            const config = {
-                bitcoin: {
-                    primary: { name: 'CoinGecko', endpoint: 'https://api.coingecko.com/api/v3/coins/bitcoin?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false', refreshInterval: 30000 },
-                    secondary: { name: 'CoinCap', endpoint: 'https://api.coincap.io/v2/assets/bitcoin', refreshInterval: 10000 }, // CoinCap ma mniej danych, ale zostawiamy interwał
-                    currentApi: 'primary'
-                },
-                markets: { /* Konfiguracja API rynków (obecnie nieużywana aktywnie z powodu CORS) */ },
-                fearGreed: { endpoint: 'https://api.alternative.me/fng/', refreshInterval: 600000 }
             };
-
-            const btcPrice = document.querySelector('.btc-price');
-            const priceChange = document.querySelector('.price-change');
-            const dataValues = document.querySelectorAll('.data-value');
-            const fearGreedValue = document.querySelector('.fear-greed-value');
-            const fearGreedIndicator = document.querySelector('.fear-greed-indicator');
-            const bitcoinApiSource = document.getElementById('bitcoin-api-source');
-            const bitcoinApiToggle = document.getElementById('bitcoin-api-toggle');
-            const dataSource = document.querySelector('.data-source');
-
-            function formatPrice(price) {
-                return new Intl.NumberFormat('pl-PL', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(price);
-            }
-
-            function formatChange(change) {
-                const formatted = change > 0 ? `+${change.toFixed(2)}%` : `${change.toFixed(2)}%`;
-                return { text: formatted, class: change >= 0 ? 'positive' : 'negative' };
-            }
-
-            async function fetchBitcoinDataCoinGecko() {
-                const endpoint = config.bitcoin.primary.endpoint;
-                console.log("Próba połączenia z głównym API Bitcoin:", endpoint);
-                try {
-                    const response = await fetch(endpoint);
-                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                    const data = await response.json();
-                    const price = data.market_data?.current_price?.usd;
-                    const change1h = data.market_data?.price_change_percentage_1h_in_currency?.usd;
-                    const change24h = data.market_data?.price_change_percentage_24h_in_currency?.usd;
-                    const change7d = data.market_data?.price_change_percentage_7d_in_currency?.usd;
-                    const change30d = data.market_data?.price_change_percentage_30d_in_currency?.usd;
-                    const dominance = data.market_data?.market_cap_percentage?.btc;
-                    if (price === undefined || change24h === undefined) throw new Error('Niekompletne dane z CoinGecko');
-                    btcPrice.textContent = formatPrice(price);
-                    const changeFormatted24h = formatChange(change24h);
-                    priceChange.textContent = `${changeFormatted24h.text} (24h)`;
-                    priceChange.className = `price-change ${changeFormatted24h.class}`;
-                    const intervals = [change1h, change7d, change30d];
-                    intervals.forEach((change, index) => {
-                        if (change !== undefined && change !== null) {
-                            const formatted = formatChange(change);
-                            dataValues[index].textContent = formatted.text;
-                            dataValues[index].className = `data-value ${formatted.class}`;
-                        } else {
-                            dataValues[index].textContent = "N/A";
-                            dataValues[index].className = "data-value";
-                        }
-                    });
-                    if (dominance !== undefined && dominance !== null) dataValues[3].textContent = `${dominance.toFixed(2)}%`;
-                    else dataValues[3].textContent = "N/A";
-                    fetchTransactionFees(price);
-                    updateLastRefreshTime();
-                    return true;
-                } catch (error) {
-                    console.error('Błąd pobierania danych Bitcoin (CoinGecko):', error);
-                    btcPrice.textContent = "Błąd API";
-                    priceChange.textContent = "N/A";
-                    priceChange.className = "price-change";
-                    [0, 1, 2, 3, 4].forEach(i => { dataValues[i].textContent = "N/A"; dataValues[i].className = "data-value"; });
-                    updateLastRefreshTime("Błąd API Bitcoin");
-                    return false;
-                }
-            }
-
-            async function fetchBitcoinDataCoinCap() {
-                const endpoint = config.bitcoin.secondary.endpoint;
-                console.log("Próba połączenia z zapasowym API Bitcoin:", endpoint);
-                try {
-                    const response = await fetch(endpoint);
-                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                    const result = await response.json();
-                    const data = result.data;
-                    const price = parseFloat(data?.priceUsd);
-                    const change24h = parseFloat(data?.changePercent24Hr);
-                    if (isNaN(price) || isNaN(change24h)) throw new Error('Niekompletne dane z CoinCap');
-                    btcPrice.textContent = formatPrice(price);
-                    const changeFormatted24h = formatChange(change24h);
-                    priceChange.textContent = `${changeFormatted24h.text} (24h)`;
-                    priceChange.className = `price-change ${changeFormatted24h.class}`;
-                    [0, 1, 2, 3].forEach(i => { dataValues[i].textContent = "N/A"; dataValues[i].className = "data-value"; });
-                    fetchTransactionFees(price);
-                    updateLastRefreshTime();
-                    return true;
-                } catch (error) {
-                    console.error('Błąd pobierania danych Bitcoin (CoinCap):', error);
-                    btcPrice.textContent = "Błąd API";
-                    priceChange.textContent = "N/A";
-                    priceChange.className = "price-change";
-                    [0, 1, 2, 3, 4].forEach(i => { dataValues[i].textContent = "N/A"; dataValues[i].className = "data-value"; });
-                    updateLastRefreshTime("Błąd API Bitcoin");
-                    return false;
-                }
-            }
             
-            async function fetchTransactionFees(currentBtcPrice) {
-                 const endpoint = 'https://mempool.space/api/v1/fees/recommended';
-                 try {
-                    const response = await fetch(endpoint);
-                    if (!response.ok) throw new Error('Mempool API error');
-                    const fees = await response.json();
-                    const feeRate = fees.halfHourFee;
-                    if (feeRate && !isNaN(feeRate) && currentBtcPrice && !isNaN(currentBtcPrice)) {
-                        const costUSD = (feeRate / 100000000) * currentBtcPrice * 140;
-                        dataValues[4].textContent = `${feeRate.toFixed(0)} sat/vB ($${costUSD.toFixed(2)})`;
-                    } else dataValues[4].textContent = "N/A";
-                 } catch (error) {
-                     console.error('Błąd pobierania opłat transakcyjnych:', error);
-                     dataValues[4].textContent = "Błąd API Feerate";
-                 }
-            }
-
-            async function fetchFearGreedIndex() {
-                const endpoint = config.fearGreed.endpoint;
-                console.log("Próba pobierania danych Fear & Greed Index:", endpoint);
-                try {
-                    const response = await fetch(endpoint);
-                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                    const data = await response.json();
-                    const value = parseInt(data?.data?.[0]?.value);
-                    const valueClassification = data?.data?.[0]?.value_classification;
-                    if (isNaN(value) || !valueClassification) throw new Error('Niekompletne dane Fear & Greed');
-                    fearGreedValue.textContent = `${value} (${valueClassification})`;
-                    const position = Math.max(0, Math.min(100, value));
-                    fearGreedIndicator.style.left = `${position}%`;
-                     if (value <= 25) fearGreedValue.style.color = '#FF3B30';
-                     else if (value <= 45) fearGreedValue.style.color = '#FF9500';
-                     else if (value <= 55) fearGreedValue.style.color = '#FFCC00';
-                     else if (value <= 75) fearGreedValue.style.color = '#9BDB1D';
-                     else fearGreedValue.style.color = '#4CD964';
-                    return true;
-                } catch (error) {
-                    console.error('Błąd pobierania danych Fear & Greed:', error);
-                    fearGreedValue.textContent = 'Błąd API';
-                    fearGreedValue.style.color = 'var(--text-secondary)';
-                    fearGreedIndicator.style.left = "50%";
-                    fearGreedIndicator.style.background = "gray";
-                    return false;
-                }
-            }
-
-            function updateLastRefreshTime(errorMessage = null) {
-                const sourceName = config.bitcoin.currentApi === 'primary' ? config.bitcoin.primary.name : config.bitcoin.secondary.name;
-                if (errorMessage) dataSource.textContent = `${errorMessage} | ${getCurrentTime()}`;
-                else dataSource.textContent = `Źródło: ${sourceName} | Ostatnia aktualizacja: ${getCurrentTime()}`;
-            }
-
-            function getCurrentTime() {
-                return new Date().toLocaleTimeString('pl-PL');
-            }
-
-            bitcoinApiToggle.addEventListener('change', function() {
-                config.bitcoin.currentApi = this.checked ? 'secondary' : 'primary';
-                fetchBitcoinData(); // Natychmiastowe odświeżenie po przełączeniu
-            });
-
-            VanillaTilt.init(document.querySelector(".bitcoin-panel"), { max: 5, speed: 400, glare: true, "max-glare": 0.2, scale: 1.02 });
-            VanillaTilt.init(document.querySelector(".search-wrapper"), { max: 3, speed: 400, glare: true, "max-glare": 0.1 });
-
-            async function fetchBitcoinData() {
-                let success;
-                if (config.bitcoin.currentApi === 'primary') {
-                    success = await fetchBitcoinDataCoinGecko();
-                } else {
-                    success = await fetchBitcoinDataCoinCap();
-                }
-                 // Aktualizuj nazwę źródła w UI PO próbie pobrania
-                const sourceName = config.bitcoin.currentApi === 'primary' ? config.bitcoin.primary.name : config.bitcoin.secondary.name;
-                bitcoinApiSource.textContent = sourceName;
-                return success;
-            }
-
-            const flashElement = (element, className) => {
-                element.classList.add(className);
-                setTimeout(() => { element.classList.remove(className); }, 1000);
+            // --- Funkcja Przeciągania --- 
+            const makeDraggable = (elmnt) => {
+                const header = elmnt.querySelector('.panel-header') || elmnt;
+                let dragStartX, dragStartY, initialX, initialY;
+                let active = false;
+                
+                const dragStart = (e) => {
+                    active = true;
+                    elmnt.style.zIndex = "1000"; // Na wierzch podczas przeciągania
+                    initialX = elmnt.offsetLeft;
+                    initialY = elmnt.offsetTop;
+                    if (e.type === "touchstart") {
+                        dragStartX = e.touches[0].clientX;
+                        dragStartY = e.touches[0].clientY;
+                        document.addEventListener("touchmove", drag, { passive: false });
+                        document.addEventListener("touchend", dragEnd, { passive: false });
+                    } else {
+                        dragStartX = e.clientX;
+                        dragStartY = e.clientY;
+                        document.addEventListener("mousemove", drag);
+                        document.addEventListener("mouseup", dragEnd);
+                    }
+                     if (e.cancelable) e.preventDefault(); // Zapobiegaj przewijaniu strony na dotykowych
+                };
+                
+                const drag = (e) => {
+                    if (!active) return;
+                    if (e.cancelable) e.preventDefault();
+                    let currentX, currentY;
+                    if (e.type === "touchmove") {
+                        currentX = e.touches[0].clientX;
+                        currentY = e.touches[0].clientY;
+                    } else {
+                        currentX = e.clientX;
+                        currentY = e.clientY;
+                    }
+                    const dx = currentX - dragStartX;
+                    const dy = currentY - dragStartY;
+                    requestAnimationFrame(() => { // Płynniejsza animacja
+                        elmnt.style.left = (initialX + dx) + "px";
+                        elmnt.style.top = (initialY + dy) + "px";
+                    });
+                };
+                
+                const dragEnd = () => {
+                    if (!active) return; // Zapobiegaj wielokrotnemu wywołaniu
+                    active = false;
+                    document.removeEventListener("mousemove", drag);
+                    document.removeEventListener("mouseup", dragEnd);
+                    document.removeEventListener("touchmove", drag);
+                    document.removeEventListener("touchend", dragEnd);
+                    saveOpenPanelsState();
+                };
+                
+                header.addEventListener("mousedown", dragStart);
+                header.addEventListener("touchstart", dragStart, { passive: false });
             };
 
-            let lastPrice = null;
+            // --- Wyszukiwarka --- 
+             searchTabsElements.forEach(tab => {
+                tab.addEventListener('click', function() { // Używamy function() dla `this`
+                    searchTabsElements.forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    const engine = this.dataset.engine;
+                    if (searchForm) { // Sprawdź czy formularz istnieje
+                        if (engine === 'google') {
+                            searchForm.action = 'https://www.google.com/search';
+                            if (searchInputElement) searchInputElement.placeholder = 'Wyszukaj w Google...';
+                        } else if (engine === 'perplexity') {
+                            searchForm.action = 'https://www.perplexity.ai/search';
+                             if (searchInputElement) searchInputElement.placeholder = 'Zapytaj Perplexity...';
+                        }
+                    }
+                });
+            });
+            
+            document.addEventListener('keydown', (e) => {
+                if (e.key === '/' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+                    e.preventDefault();
+                    if (searchInputElement) searchInputElement.focus();
+                }
+            });
+            
+            // --- API Bitcoin - Przełącznik i Główna logika pobierania --- 
+             const fetchBitcoinData = async () => {
+                 let success;
+                 const apiToCall = config.bitcoin.currentApi === 'primary' ? fetchBitcoinDataCoinGecko : fetchBitcoinDataCoinCap;
+                 success = await apiToCall();
+                 // Aktualizuj nazwę źródła w UI PO próbie pobrania
+                 const sourceName = config.bitcoin.currentApi === 'primary' ? config.bitcoin.primary.name : config.bitcoin.secondary.name;
+                 if (bitcoinApiSourceElement) bitcoinApiSourceElement.textContent = sourceName;
+                 return success;
+             };
+             
+            if (bitcoinApiToggleElement) {
+                 bitcoinApiToggleElement.addEventListener('change', function() { // function() dla `this`
+                     config.bitcoin.currentApi = this.checked ? 'secondary' : 'primary';
+                     fetchBitcoinData(); // Natychmiastowe odświeżenie po przełączeniu
+                 });
+             }
+             
+            // --- Animacje i Efekty --- 
+            const flashElement = (element, className) => {
+                 if (!element) return;
+                element.classList.add(className);
+                setTimeout(() => { element.classList.remove(className); }, 800); // Skrócono czas animacji
+            };
+
             const monitorPriceChanges = () => {
-                const currentPriceText = btcPrice.textContent;
-                // Upewnij się, że nie próbujesz parsować "Błąd API"
-                if (currentPriceText.includes("Błąd")) {
-                    lastPrice = null; // Zresetuj, jeśli jest błąd
+                if (!btcPriceElement) return;
+                const currentPriceText = btcPriceElement.textContent;
+                if (currentPriceText.includes("Błąd") || currentPriceText.includes("Ładowanie")) {
+                    lastBtcPrice = null;
                     return;
                 }
                 const currentPrice = parseFloat(currentPriceText.replace(/[^0-9.,]/g, '').replace(',', '.'));
-                if (lastPrice !== null && !isNaN(currentPrice)) {
-                    if (currentPrice > lastPrice) flashElement(btcPrice, 'price-flash-up');
-                    else if (currentPrice < lastPrice) flashElement(btcPrice, 'price-flash-down');
+                if (lastBtcPrice !== null && !isNaN(currentPrice)) {
+                    if (currentPrice > lastBtcPrice) flashElement(btcPriceElement, 'price-flash-up');
+                    else if (currentPrice < lastBtcPrice) flashElement(btcPriceElement, 'price-flash-down');
                 }
-                lastPrice = currentPrice;
+                lastBtcPrice = currentPrice;
             };
+            
+            if (bitcoinPanelElement) makeDraggable(bitcoinPanelElement);
+            if (searchWrapperElement) VanillaTilt.init(searchWrapperElement, { max: 3, speed: 400, glare: true, "max-glare": 0.1 });
+            if (bitcoinPanelElement) VanillaTilt.init(bitcoinPanelElement, { max: 5, speed: 400, glare: true, "max-glare": 0.2, scale: 1.02 });
 
-            document.addEventListener('keydown', function(e) {
-                if (e.key === '/' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
-                    e.preventDefault();
-                    document.querySelector('.search-input').focus();
-                }
-            });
-
-            makeDraggable(document.querySelector('.bitcoin-panel'));
-
-            let konamiCode = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'];
-            let konamiIndex = 0;
-            document.addEventListener('keydown', function(e) {
-                if (e.key === konamiCode[konamiIndex]) {
-                    konamiIndex++;
-                    if (konamiIndex === konamiCode.length) {
+            // Easter Egg
+            document.addEventListener('keydown', (e) => {
+                if (e.key === konamiCodeSequence[konamiCodeIndex]) {
+                    konamiCodeIndex++;
+                    if (konamiCodeIndex === konamiCodeSequence.length) {
                         document.body.classList.add('bitcoin-rain');
                         for (let i = 0; i < 20; i++) {
                             let bitcoin = document.createElement('div');
@@ -469,73 +576,22 @@ document.addEventListener('DOMContentLoaded', function() {
                             document.body.classList.remove('bitcoin-rain');
                             document.querySelectorAll('.bitcoin-rain-coin').forEach(coin => coin.remove());
                         }, 10000);
-                        konamiIndex = 0;
+                        konamiCodeIndex = 0;
                     }
-                } else konamiIndex = 0;
+                } else konamiCodeIndex = 0;
             });
 
+            // --- Inicjalizacja danych i interwałów ---
             fetchBitcoinData();
             fetchFearGreedIndex();
-            setInterval(fetchBitcoinData, config.bitcoin.primary.refreshInterval);
+            setInterval(fetchBitcoinData, config.bitcoin.primary.refreshInterval); // Używamy interwału głównego API
             setInterval(fetchFearGreedIndex, config.fearGreed.refreshInterval);
             setInterval(monitorPriceChanges, 1000);
-            loadOpenPanelsState();
-
-            async function loadMarketIndexes(country, contentElement) {
-                const indexes = extendedMarketIndexes[country] || [];
-                if (!contentElement) { console.error('Brak elementu docelowego dla indeksów'); return; }
-                if (indexes.length === 0) { contentElement.innerHTML = `<p>Brak skonfigurowanych indeksów dla ${country}</p>`; return; }
-                contentElement.innerHTML = `<div class="loading"></div><p>Ładowanie danych indeksów...</p>`;
-                const symbolList = indexes.map(index => index.symbol).join(',');
-                const endpoint = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${symbolList}`;
-                try {
-                    console.log("Pobieranie danych indeksów dla:", country, "z", endpoint);
-                    const response = await fetch(endpoint);
-                    if (!response.ok || !response.headers.get("content-type")?.includes("application/json")) {
-                        throw new Error(`Problem z API Yahoo Finance: Status ${response.status}`);
-                    }
-                    const data = await response.json();
-                    if (!data?.quoteResponse?.result) throw new Error('Nieprawidłowa odpowiedź z API Yahoo Finance');
-                    const results = data.quoteResponse.result;
-                    let html = `<div class="index-list">`;
-                    indexes.forEach((index, idx) => {
-                        const marketData = results.find(r => r.symbol === index.symbol);
-                        let price = "Błąd danych";
-                        let change1D = { text: "N/A", class: "" };
-                        if (marketData && marketData.regularMarketPrice !== undefined && marketData.regularMarketPrice !== null) {
-                            price = formatPrice(marketData.regularMarketPrice);
-                            if (marketData.regularMarketChangePercent !== undefined && marketData.regularMarketChangePercent !== null) {
-                                change1D = formatChange(marketData.regularMarketChangePercent);
-                            } else change1D = { text: "N/A", class: "" };
-                        } else {
-                             price = "Brak danych";
-                             change1D = { text: "N/A", class: "" };
-                        }
-                        html += `<div class="index-item">
-                                     <div class="index-header"><span class="index-flag">${index.flag}</span><span class="index-name">${index.name}</span></div>
-                                     <div class="index-price">${price}</div>
-                                     <div class="index-intervals"><div class="interval-grid" style="grid-template-columns: 1fr;"><div class="interval-item"><span class="interval-label">Zmiana (1D):</span><span class="interval-value ${change1D.class}">${change1D.text}</span></div></div></div>
-                                 </div>`;
-                    });
-                    html += `</div><div class="data-source">Dane: Yahoo Finance | ${getCurrentTime()}</div>`;
-                    contentElement.innerHTML = html;
-                } catch (error) {
-                    console.error(`Błąd pobierania danych indeksów (${country}):`, error);
-                    let html = `<div class="index-list">`;
-                    indexes.forEach((index) => {
-                        html += `<div class="index-item">
-                                     <div class="index-header"><span class="index-flag">${index.flag}</span><span class="index-name">${index.name}</span></div>
-                                     <div class="index-price">Błąd API</div>
-                                     <div class="index-intervals"><div class="interval-grid" style="grid-template-columns: 1fr;"><div class="interval-item"><span class="interval-label">Zmiana (1D):</span><span class="interval-value">N/A</span></div></div></div>
-                                 </div>`;
-                    });
-                    html += `</div><div class="data-source">Błąd API Indeksów | ${getCurrentTime()}</div>`;
-                    contentElement.innerHTML = html;
-                }
-            }
+            loadOpenPanelsState(); // Odtwórz panele po inicjalizacji mapy i reszty
+            
         } catch (error) { 
-            console.error("Błąd krytyczny podczas inicjalizacji amCharts i logiki aplikacji:", error);
-            document.body.innerHTML += `<div style="color: red; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.8); padding: 20px; border-radius: 10px;">Wystąpił krytyczny błąd podczas ładowania mapy. Spróbuj odświeżyć stronę.</div>`;
+            console.error("Błąd krytyczny podczas inicjalizacji aplikacji:", error);
+            document.body.innerHTML += `<div style="color: red; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.8); padding: 20px; border-radius: 10px;">Wystąpił krytyczny błąd. Spróbuj odświeżyć stronę.</div>`;
         } 
     }); 
 }); 
