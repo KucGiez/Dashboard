@@ -1,0 +1,488 @@
+:root {
+    --bg-dark: #121212;
+    --bg-panel: rgba(30, 30, 30, 0.75);
+    --accent-gold: #FFD700;
+    --accent-blue: #007AFF;
+    --text-primary: rgba(255, 255, 255, 0.9);
+    --text-secondary: rgba(255, 255, 255, 0.6);
+    --border-radius: 12px;
+    --shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+body {
+    background-color: var(--bg-dark);
+    color: var(--text-primary);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow-x: hidden;
+}
+
+/* Wspólny styl dla wszystkich paneli */
+.panel {
+    background: var(--bg-panel);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: var(--border-radius);
+    padding: 15px;
+    box-shadow: var(--shadow);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    transition: all 0.3s ease;
+    transform-style: preserve-3d;
+    perspective: 1000px;
+}
+
+.panel:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+}
+
+/* Panel można przeciągać */
+.draggable {
+    cursor: move;
+    position: absolute;
+    z-index: 100;
+}
+
+/* Panel nagłówka dla przeciąganych paneli */
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 10px;
+}
+
+.panel-title {
+    font-weight: 500;
+    font-size: 16px;
+}
+
+.panel-close {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 18px;
+    transition: color 0.2s;
+    outline: none;
+}
+
+.panel-close:hover {
+    color: var(--text-primary);
+}
+
+.search-container {
+    position: absolute;
+    top: 15%;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 100;
+    width: 550px;
+    max-width: 90%;
+}
+
+.search-wrapper {
+    background: var(--bg-panel);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: var(--border-radius);
+    padding: 15px;
+    box-shadow: var(--shadow);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    transition: all 0.3s ease;
+}
+
+.search-wrapper:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+}
+
+.search-tabs {
+    display: flex;
+    margin-bottom: 10px;
+}
+
+.search-tab {
+    padding: 5px 10px;
+    cursor: pointer;
+    border-radius: 6px;
+    margin-right: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    transition: all 0.2s ease;
+}
+
+.search-tab.active {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.search-input {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.2);
+    border: none;
+    outline: none;
+    height: 44px;
+    border-radius: var(--border-radius);
+    padding: 0 15px;
+    color: var(--text-primary);
+    font-size: 16px;
+    transition: all 0.3s ease;
+}
+
+.search-input:focus {
+    background: rgba(0, 0, 0, 0.3);
+    box-shadow: 0 0 0 2px var(--accent-blue);
+}
+
+.map-container {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
+}
+
+#chartdiv {
+    width: 100%;
+    height: 100%;
+}
+
+/* Panel dla danych indeksów kraju */
+.country-panel {
+    width: 300px;
+    min-height: 150px; /* Zmniejszono min wysokość po usunięciu interwałów */
+    display: none;
+    position: absolute;
+    z-index: 1000;
+}
+
+.country-content {
+    margin-top: 10px;
+}
+
+.index-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.index-item {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 10px;
+}
+
+.index-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.index-flag {
+    font-size: 18px;
+    margin-right: 8px;
+    line-height: 1;
+}
+
+.index-name {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.index-price {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.index-intervals {
+    /* Już niepotrzebne, ale zostawiamy klasę */
+}
+
+.interval-grid {
+    display: grid;
+    gap: 5px;
+    grid-template-columns: 1fr; /* Zawsze jedna kolumna */
+}
+
+.interval-item {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+}
+
+.interval-label {
+    color: var(--text-secondary);
+}
+
+.interval-value {
+    font-weight: 500;
+}
+
+/* Panel danych Bitcoin */
+.bitcoin-panel {
+    right: 20px;
+    top: 20px;
+    width: 320px;
+}
+
+.bitcoin-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.bitcoin-logo {
+    width: 36px;
+    height: 36px;
+    margin-right: 10px;
+}
+
+.price-container {
+    display: flex;
+    flex-direction: column;
+}
+
+.btc-price {
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--accent-gold);
+    transition: color 0.5s ease;
+}
+
+.price-change {
+    font-size: 14px;
+    margin-top: 4px;
+}
+
+.positive {
+    color: #4CD964;
+}
+
+.negative {
+    color: #FF3B30;
+}
+
+.data-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.data-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.data-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+}
+
+.data-value {
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.api-switch {
+    display: flex;
+    align-items: center;
+    margin-top: 15px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-top: 15px;
+}
+
+.api-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-right: 10px;
+}
+
+/* Przełącznik API */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 40px;
+    height: 20px;
+}
+
+.switch input { 
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.2);
+    transition: .4s;
+    border-radius: 20px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 14px;
+    width: 14px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: var(--accent-blue);
+}
+
+input:focus + .slider {
+    box-shadow: 0 0 1px var(--accent-blue);
+}
+
+input:checked + .slider:before {
+    transform: translateX(20px);
+}
+
+.data-source {
+    font-size: 10px;
+    color: var(--text-secondary);
+    margin-top: 15px;
+    text-align: right;
+}
+
+/* Fear & Greed Index */
+.fear-greed-container {
+    margin-top: 15px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-top: 15px;
+}
+
+.fear-greed-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+    display: block;
+}
+
+.fear-greed-bar {
+    width: 100%;
+    height: 8px;
+    background: linear-gradient(to right, #FF3B30, #FF9500, #FFCC00, #9BDB1D, #4CD964);
+    border-radius: 4px;
+    position: relative;
+    margin-bottom: 5px;
+}
+
+.fear-greed-indicator {
+    position: absolute;
+    width: 2px;
+    height: 12px;
+    background-color: white;
+    top: -2px;
+    transform: translateX(-50%);
+    border-radius: 1px;
+    box-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+}
+
+.fear-greed-value {
+    font-size: 14px;
+    font-weight: 500;
+    text-align: center;
+}
+
+/* Loading animation */
+.loading {
+    border: 4px solid rgba(255, 255, 255, 0.1);
+    border-left-color: var(--accent-blue);
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    animation: spin 1s linear infinite;
+    margin: 10px auto;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Animacje flash dla ceny */
+.price-flash-up {
+    animation: flash-up 0.8s ease-out;
+}
+
+.price-flash-down {
+    animation: flash-down 0.8s ease-out;
+}
+
+@keyframes flash-up {
+    0% { color: #4CD964; transform: scale(1.05); }
+    100% { color: var(--accent-gold); transform: scale(1); }
+}
+
+@keyframes flash-down {
+    0% { color: #FF3B30; transform: scale(0.98); }
+    100% { color: var(--accent-gold); transform: scale(1); }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+    width: 6px;
+}
+::-webkit-scrollbar-track {
+    background: rgba(0,0,0,0.1);
+}
+::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.2);
+    border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(255,255,255,0.3);
+}
+
+/* Easter Egg - Bitcoin Rain */
+.bitcoin-rain-coin {
+    position: absolute;
+    top: -30px;
+    width: 20px;
+    height: 20px;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path fill="%23FFD700" d="M16 0C7.163 0 0 7.163 0 16s7.163 16 16 16 16-7.163 16-16S24.837 0 16 0zm4.28 19.758c.446 1.786-1.117 2.85-2.95 2.85-.91 0-1.69-.268-2.275-.67l-.402-.268v1.786c0 .446-.313.76-.715.76h-1.206c-.402 0-.715-.313-.715-.76v-1.786l-.447.268c-.536.313-1.206.536-1.92.536-1.92 0-3.574-1.206-3.574-3.217 0-1.474.804-2.412 2.01-2.895l.894-.357c.223-.09.357-.313.357-.536s-.134-.446-.357-.536l-.894-.357c-1.206-.482-2.01-1.42-2.01-2.895 0-2.01 1.652-3.216 3.573-3.216.715 0 1.385.223 1.921.536l.447.268V6.687c0-.446.313-.76.715-.76h1.206c.402 0 .715.313.715.76v1.786l.402-.268c.58-.402 1.36-.67 2.274-.67 1.832 0 3.395 1.063 2.95 2.85-.357 1.474-1.563 2.275-2.85 2.59l-.446.134v.848l.446.134c1.287.312 2.493 1.116 2.85 2.59zm-4.065-6.926c.446-.134.715-.536.715-1.027V9.966c0-.49-.268-.894-.715-1.028-.893-.268-1.608-.983-1.608-1.965 0-.894.536-1.518 1.206-1.518.446 0 .804.134 1.116.313l.268.178v-1.34c-.357-.134-.76-.223-1.16-.223-.983 0-1.92.715-1.92 2.055 0 1.25.804 1.92 1.787 2.233l.446.134v2.055l-.446.134c-.983.312-1.787.982-1.787 2.232 0 1.34.938 2.055 1.92 2.055.402 0 .804-.09 1.16-.224v-1.34l-.268.178c-.313.18-.67.313-1.117.313-.67 0-1.206-.625-1.206-1.518 0-.982.715-1.697 1.608-1.965zm1.563 5.09c-.447.134-.715.536-.715 1.028v1.838c0 .49.268.893.715 1.027.893.268 1.608.982 1.608 1.965 0 .893-.536 1.518-1.206 1.518-.446 0-.804-.134-1.116-.312l-.268-.179v1.34c.357.134.76.223 1.16.223.983 0 1.92-.714 1.92-2.055 0-1.25-.804-1.92-1.787-2.232l-.446-.134v-2.055l.446-.134c.983-.312 1.787-.982 1.787-2.232 0-1.34-.938-2.055-1.92-2.055-.402 0-.804.09-1.16.223v1.34l.268-.178c.313-.18.67-.313 1.117-.313.67 0 1.206.625 1.206 1.518 0 .983-.715 1.697-1.608 1.965z"/></svg>');
+    background-size: contain;
+    background-repeat: no-repeat;
+    animation: fall 5s linear infinite;
+}
+
+@keyframes fall {
+    0% { transform: translateY(0); opacity: 1; }
+    100% { transform: translateY(100vh); opacity: 0; }
+}
+
+/* Animacja gradientu tła */
+@keyframes gradient {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+body {
+    background: linear-gradient(-45deg, #0a0a0a, #1a1a1a, #0a0a0a, #121212);
+    background-size: 400% 400%;
+    animation: gradient 15s ease infinite;
+} 
