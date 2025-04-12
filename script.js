@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const config = {
                 bitcoin: {
                     primary: { name: 'CoinGecko', endpoint: 'https://api.coingecko.com/api/v3/coins/bitcoin?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false', refreshInterval: 30000 },
-                    secondary: { name: 'CoinCap', endpoint: 'https://api.coincap.io/v2/assets/bitcoin', refreshInterval: 10000 },
+                    secondary: { name: 'CoinPaprika', endpoint: 'https://api.coinpaprika.com/v1/tickers/btc-bitcoin', refreshInterval: 30000 },
                     currentApi: 'primary'
                 },
                 markets: { /* Nieaktywne */ },
@@ -68,8 +68,10 @@ document.addEventListener('DOMContentLoaded', () => {
             let konamiCodeIndex = 0;
 
             // --- Funkcje Pomocnicze ---
-            const formatPrice = (price) => 
-                new Intl.NumberFormat('pl-PL', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(price);
+            const formatPrice = (price) => {
+                if (price === undefined || price === null || isNaN(price)) return "N/A"; // Dodano obsługę błędów
+                return new Intl.NumberFormat('pl-PL', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(price);
+            }
 
             const formatChange = (change) => {
                 if (change === undefined || change === null || isNaN(change)) return { text: "N/A", class: "" };
@@ -85,40 +87,27 @@ document.addEventListener('DOMContentLoaded', () => {
             };
             
             // Funkcja pomocnicza do obsługi błędów API i aktualizacji UI
-            const handleFetchError = (uiElements, errorMsg, dataSourceMsg, error) => {
+            const handleFetchError = (sourceName, errorMsg, error) => {
                 console.error(errorMsg, error);
-                if (uiElements.price) uiElements.price.textContent = "Błąd API";
-                if (uiElements.change) {
-                    uiElements.change.textContent = "N/A";
-                    uiElements.change.className = "price-change"; // Reset klasy
+                // Użyj globalnych referencji do elementów DOM
+                if (btcPriceElement) btcPriceElement.textContent = "Błąd API";
+                if (priceChangeElement) {
+                    priceChangeElement.textContent = "N/A";
+                    priceChangeElement.className = "price-change"; // Reset klasy
                 }
-                if (uiElements.values) {
-                    uiElements.values.forEach(el => {
-                        el.textContent = "N/A";
-                        el.className = "data-value"; // Reset klasy
+                if (dataValueElements) {
+                    dataValueElements.forEach((el, index) => {
+                         // Indeksy 0-3 to dane BTC, indeks 4 to opłaty
+                         if (index < 4) { // Tylko resetuj dane BTC (1h, 7d, 30d, Dominacja)
+                             el.textContent = "N/A";
+                             el.className = "data-value"; // Reset klasy
+                         }
                     });
                 }
-                if (uiElements.fearGreed) {
-                    uiElements.fearGreed.value.textContent = 'Błąd API';
-                    uiElements.fearGreed.value.style.color = 'var(--text-secondary)';
-                    uiElements.fearGreed.indicator.style.left = "50%";
-                    uiElements.fearGreed.indicator.style.background = "gray";
-                }
-                if (uiElements.marketIndexList) {
-                    let html = `<div class="index-list">`;
-                    uiElements.marketIndexList.indexes.forEach(index => {
-                         html += `<div class="index-item">
-                                     <div class="index-header"><span class="index-flag">${index.flag}</span><span class="index-name">${index.name}</span></div>
-                                     <div class="index-price">Błąd API</div>
-                                     <div class="index-intervals"><div class="interval-grid" style="grid-template-columns: 1fr;"><div class="interval-item"><span class="interval-label">Zmiana (1D):</span><span class="interval-value">N/A</span></div></div></div>
-                                 </div>`;
-                    });
-                     html += `</div><div class="data-source">${dataSourceMsg} | ${getCurrentTime()}</div>`;
-                     uiElements.marketIndexList.contentElement.innerHTML = html;
-                }
-                 if (dataSourceElement) {
-                    updateLastRefreshTime(dataSourceMsg); // Użyj globalnej funkcji do aktualizacji źródła
-                 }
+                 // Nie resetuj Fear & Greed, jeśli błąd dotyczy tylko API Bitcoina
+                // if (fearGreedValueElement && fearGreedIndicatorElement) { ... } 
+                 // Nie resetuj Market Indexes, jeśli błąd dotyczy tylko API Bitcoina (już niepotrzebne, bo obsługa błędów jest w loadMarketIndexes)
+                updateLastRefreshTime(`Błąd API (${sourceName})`); // Przekaż nazwę źródła
             };
             
             const updateLastRefreshTime = (errorMessage = null) => {
@@ -130,8 +119,9 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // --- Funkcje API ---
             const fetchBitcoinDataCoinGecko = async () => {
-                const endpoint = config.bitcoin.primary.endpoint;
-                console.log("Próba połączenia z głównym API Bitcoin:", endpoint);
+                const sourceConfig = config.bitcoin.primary;
+                const endpoint = sourceConfig.endpoint;
+                console.log(`Próba połączenia z ${sourceConfig.name} API Bitcoin:`, endpoint);
                 try {
                     const response = await fetch(endpoint);
                     if (!response.ok) throw new Error(`HTTP error! status: ${response.status} ${await response.text()}`); // Dodaj tekst błędu
@@ -141,9 +131,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     const change24h = data.market_data?.price_change_percentage_24h_in_currency?.usd;
                     const change7d = data.market_data?.price_change_percentage_7d_in_currency?.usd;
                     const change30d = data.market_data?.price_change_percentage_30d_in_currency?.usd;
-                    const dominance = data.market_data?.market_cap_percentage?.btc; 
+                    const dominance = data.market_data?.market_cap_percentage?.btc;
                     if (price === undefined || change24h === undefined) throw new Error('Niekompletne dane z CoinGecko');
-                    
+                    console.log("[CoinGecko] Dominance:", dominance); // Logowanie dominacji
+
                     // Aktualizacja UI
                     btcPriceElement.textContent = formatPrice(price);
                     const changeFormatted24h = formatChange(change24h);
@@ -151,59 +142,72 @@ document.addEventListener('DOMContentLoaded', () => {
                     priceChangeElement.className = `price-change ${changeFormatted24h.class}`;
                     const intervals = [change1h, change7d, change30d];
                     intervals.forEach((change, index) => {
-                        const formatted = formatChange(change); 
+                        const formatted = formatChange(change);
                         dataValueElements[index].textContent = formatted.text;
                         dataValueElements[index].className = `data-value ${formatted.class}`;
                     });
                     dataValueElements[3].textContent = dominance !== undefined ? `${dominance.toFixed(2)}%` : "N/A";
                     dataValueElements[3].className = "data-value"; // Reset klasy dla dominacji
-                    
-                    fetchTransactionFees(price); // Pobierz opłaty
-                    updateLastRefreshTime();
-                    return true;
-                } catch (error) {
-                    handleFetchError(
-                         { price: btcPriceElement, change: priceChangeElement, values: dataValueElements },
-                         'Błąd pobierania danych Bitcoin (CoinGecko):', 
-                         'Błąd API Bitcoin', 
-                         error
-                    );
-                    return false;
-                }
-            };
 
-            const fetchBitcoinDataCoinCap = async () => {
-                const endpoint = config.bitcoin.secondary.endpoint;
-                console.log("Próba połączenia z zapasowym API Bitcoin:", endpoint);
-                try {
-                    const response = await fetch(endpoint);
-                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status} ${await response.text()}`);
-                    const result = await response.json();
-                    const data = result.data;
-                    const price = parseFloat(data?.priceUsd);
-                    const change24h = parseFloat(data?.changePercent24Hr);
-                    if (isNaN(price) || isNaN(change24h)) throw new Error('Niekompletne dane z CoinCap');
-                    
-                    // Aktualizacja UI
-                    btcPriceElement.textContent = formatPrice(price);
-                    const changeFormatted24h = formatChange(change24h);
-                    priceChangeElement.textContent = `${changeFormatted24h.text} (24h)`;
-                    priceChangeElement.className = `price-change ${changeFormatted24h.class}`;
-                    [0, 1, 2, 3].forEach(i => { dataValueElements[i].textContent = "N/A"; dataValueElements[i].className = "data-value"; }); // CoinCap nie ma tych danych
-                    
-                    fetchTransactionFees(price); // Pobierz opłaty
+                    fetchTransactionFees(price); // Pobierz opłaty tylko jeśli główne dane są OK
                     updateLastRefreshTime();
-                    return true;
+                    return true; // Sukces
                 } catch (error) {
-                     handleFetchError(
-                         { price: btcPriceElement, change: priceChangeElement, values: dataValueElements },
-                         'Błąd pobierania danych Bitcoin (CoinCap):', 
-                         'Błąd API Bitcoin', 
-                         error
-                    );
-                    return false;
+                     // Użyj nowej wersji handleFetchError
+                     handleFetchError(sourceConfig.name, `Błąd pobierania danych Bitcoin (${sourceConfig.name}):`, error);
+                    return false; // Błąd
                 }
             };
+            
+             // NOWA funkcja dla CoinPaprika
+             const fetchBitcoinDataCoinPaprika = async () => {
+                 const sourceConfig = config.bitcoin.secondary;
+                 const endpoint = sourceConfig.endpoint;
+                 console.log(`Próba połączenia z ${sourceConfig.name} API Bitcoin:`, endpoint);
+                 try {
+                     const response = await fetch(endpoint);
+                     if (!response.ok) throw new Error(`HTTP error! status: ${response.status} ${await response.text()}`);
+                     const data = await response.json();
+                     const price = data?.quotes?.USD?.price;
+                     const change24h = data?.quotes?.USD?.percent_change_24h;
+                     // CoinPaprika dostarcza też inne interwały
+                     const change1h = data?.quotes?.USD?.percent_change_1h;
+                     const change7d = data?.quotes?.USD?.percent_change_7d;
+                     const change30d = data?.quotes?.USD?.percent_change_30d;
+                     const dominance = data?.dominance_percentage; // Poprawka: CoinPaprika zwraca to pole na głównym poziomie
+                     
+                     if (price === undefined || change24h === undefined) throw new Error('Niekompletne dane z CoinPaprika');
+                     console.log("[CoinPaprika] Dominance:", dominance); // Logowanie dominacji
+
+                     // Aktualizacja UI
+                     btcPriceElement.textContent = formatPrice(price);
+                     const changeFormatted24h = formatChange(change24h);
+                     priceChangeElement.textContent = `${changeFormatted24h.text} (24h)`;
+                     priceChangeElement.className = `price-change ${changeFormatted24h.class}`;
+                     // Aktualizuj inne interwały, jeśli dostępne
+                     const intervals = [change1h, change7d, change30d];
+                     intervals.forEach((change, index) => {
+                         if (change !== undefined) {
+                             const formatted = formatChange(change);
+                             dataValueElements[index].textContent = formatted.text;
+                             dataValueElements[index].className = `data-value ${formatted.class}`;
+                         } else {
+                             dataValueElements[index].textContent = "N/A";
+                             dataValueElements[index].className = "data-value";
+                         }
+                     });
+                     dataValueElements[3].textContent = dominance !== undefined ? `${dominance.toFixed(2)}%` : "N/A";
+                     dataValueElements[3].className = "data-value";
+
+                     fetchTransactionFees(price); // Pobierz opłaty tylko jeśli główne dane są OK
+                     updateLastRefreshTime();
+                     return true; // Sukces
+                 } catch (error) {
+                      // Użyj nowej wersji handleFetchError
+                      handleFetchError(sourceConfig.name, `Błąd pobierania danych Bitcoin (${sourceConfig.name}):`, error);
+                     return false; // Błąd
+                 }
+             };
             
             const fetchTransactionFees = async (currentBtcPrice) => {
                  const endpoint = config.fees.endpoint;
@@ -213,7 +217,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     const fees = await response.json();
                     const feeRate = fees.halfHourFee;
                     if (feeRate && !isNaN(feeRate) && currentBtcPrice && !isNaN(currentBtcPrice)) {
-                        const costUSD = (feeRate / 100000000) * currentBtcPrice * 140;
+                        const typicalTxSizeBytes = 140; // Zakładamy typowy rozmiar transakcji w vBytes
+                        const costSatoshi = feeRate * typicalTxSizeBytes;
+                        const costUSD = (costSatoshi / 100000000) * currentBtcPrice;
                         dataValueElements[4].textContent = `${feeRate.toFixed(0)} sat/vB ($${costUSD.toFixed(2)})`;
                     } else dataValueElements[4].textContent = "N/A";
                  } catch (error) {
@@ -258,50 +264,76 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             };
 
+            // NOWA funkcja dla Alpha Vantage
             const loadMarketIndexes = async (country, contentElement) => {
                 const indexes = ExtendedMarketIndexes[country] || [];
+                const apiKey = 'ZJPQUDLDPOVXN74F'; // Twój klucz API
+                const delayBetweenCalls = 13000; // Opóźnienie w ms (nieco ponad 12s dla bezpieczeństwa limitu 5/min)
+
                 if (!contentElement) { console.error('Brak elementu docelowego dla indeksów'); return; }
                 if (indexes.length === 0) { contentElement.innerHTML = `<p>Brak skonfigurowanych indeksów dla ${country}</p>`; return; }
-                
-                contentElement.innerHTML = `<div class="loading"></div><p>Ładowanie danych indeksów...</p>`;
-                const symbolList = indexes.map(index => index.symbol).join(',');
-                const endpoint = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${symbolList}`;
-                
-                try {
-                    console.log("Pobieranie danych indeksów dla:", country, "z", endpoint);
-                    const response = await fetch(endpoint);
-                    if (!response.ok || !response.headers.get("content-type")?.includes("application/json")) {
-                        throw new Error(`Problem z API Yahoo Finance: Status ${response.status} ${await response.text()}`); // Dodaj tekst błędu
-                    }
-                    const data = await response.json();
-                    if (!data?.quoteResponse?.result) throw new Error('Nieprawidłowa odpowiedź z API Yahoo Finance');
-                    const results = data.quoteResponse.result;
-                    
-                    let html = `<div class="index-list">`;
-                    indexes.forEach((index) => {
-                        const marketData = results.find(r => r.symbol === index.symbol);
-                        let price = "Brak danych";
-                        let change1D = { text: "N/A", class: "" };
-                        if (marketData && marketData.regularMarketPrice !== undefined && marketData.regularMarketPrice !== null) {
-                            price = formatPrice(marketData.regularMarketPrice);
-                            change1D = formatChange(marketData.regularMarketChangePercent);
+
+                contentElement.innerHTML = `<div class="loading"></div><p>Ładowanie danych indeksów (Alpha Vantage)...</p>`;
+                let html = `<div class="index-list">`;
+                let errorOccurred = false;
+
+                const fetchIndexData = async (index) => {
+                    const endpoint = `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${index.symbol}&apikey=${apiKey}`;
+                    console.log(`Pobieranie danych dla ${index.name} (${index.symbol}) z Alpha Vantage...`);
+                    try {
+                        const response = await fetch(endpoint);
+                        if (!response.ok) throw new Error(`HTTP error! status: ${response.status} ${await response.text()}`);
+                        const data = await response.json();
+
+                        if (data['Note']) { // Sprawdzenie notatki o limicie API
+                             throw new Error('Osiągnięto limit API Alpha Vantage. Spróbuj ponownie później.');
                         }
-                        html += `<div class="index-item">
-                                     <div class="index-header"><span class="index-flag">${index.flag}</span><span class="index-name">${index.name}</span></div>
-                                     <div class="index-price">${price}</div>
-                                     <div class="index-intervals"><div class="interval-grid" style="grid-template-columns: 1fr;"><div class="interval-item"><span class="interval-label">Zmiana (1D):</span><span class="interval-value ${change1D.class}">${change1D.text}</span></div></div></div>
-                                 </div>`;
-                    });
-                    html += `</div><div class="data-source">Dane: Yahoo Finance | ${getCurrentTime()}</div>`;
-                    contentElement.innerHTML = html;
-                } catch (error) {
-                     handleFetchError(
-                        { marketIndexList: { contentElement: contentElement, indexes: indexes } },
-                        `Błąd pobierania danych indeksów (${country}):`, 
-                        'Błąd API Indeksów', 
-                        error
-                     );
+                        if (data['Error Message']) { // Sprawdzenie komunikatu o błędzie
+                            throw new Error(`Błąd API Alpha Vantage: ${data['Error Message']}`);
+                        }
+                        const quote = data['Global Quote'];
+                        if (!quote || Object.keys(quote).length === 0) {
+                             // Czasem AV zwraca pusty obiekt zamiast błędu dla nieznanych symboli
+                             console.warn(`Brak danych (lub pusty obiekt) dla symbolu: ${index.symbol}`);
+                             return { price: "Brak danych", change1D: { text: "N/A", class: "" } };
+                        }
+
+                        const price = quote['05. price'] ? formatPrice(parseFloat(quote['05. price'])) : "Brak danych";
+                        const changePercent = quote['10. change percent'] ? parseFloat(quote['10. change percent'].replace('%', '')) : undefined;
+                        const change1D = formatChange(changePercent);
+                        return { price, change1D };
+
+                    } catch (error) {
+                        console.error(`Błąd pobierania danych dla ${index.name} (${index.symbol}):`, error);
+                        errorOccurred = true; // Zaznacz, że wystąpił błąd
+                        return { price: "Błąd API", change1D: { text: "N/A", class: "" }, errorMessage: error.message };
+                    }
+                };
+
+                // Wykonuj zapytania sekwencyjnie z opóźnieniem
+                for (let i = 0; i < indexes.length; i++) {
+                    const index = indexes[i];
+                    const { price, change1D, errorMessage } = await fetchIndexData(index);
+
+                    html += `<div class="index-item">
+                                 <div class="index-header"><span class="index-flag">${index.flag}</span><span class="index-name">${index.name}</span></div>
+                                 <div class="index-price">${price}</div>
+                                 <div class="index-intervals"><div class="interval-grid" style="grid-template-columns: 1fr;"><div class="interval-item"><span class="interval-label">Zmiana (1D):</span><span class="interval-value ${change1D.class}">${change1D.text}</span></div></div></div>
+                             </div>`;
+
+                    if (errorMessage) {
+                         html += `<div class="error-message" style="font-size: 0.8em; color: var(--negative); padding: 0 10px 5px 10px;">${errorMessage}</div>`;
+                    }
+                    
+                    // Poczekaj przed następnym wywołaniem, ale nie po ostatnim
+                    if (i < indexes.length - 1) {
+                        await new Promise(resolve => setTimeout(resolve, delayBetweenCalls));
+                    }
                 }
+
+                const dataSourceText = errorOccurred ? 'Dane: Alpha Vantage (Wystąpiły błędy)' : 'Dane: Alpha Vantage';
+                html += `</div><div class="data-source">${dataSourceText} | ${getCurrentTime()}</div>`;
+                contentElement.innerHTML = html;
             };
             
             // --- Inicjalizacja Mapy --- 
@@ -515,22 +547,32 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
             
-            // --- API Bitcoin - Przełącznik i Główna logika pobierania --- 
+            // --- API Bitcoin - Przełącznik i Główna logika pobierania ---
              const fetchBitcoinData = async () => {
                  let success;
-                 const apiToCall = config.bitcoin.currentApi === 'primary' ? fetchBitcoinDataCoinGecko : fetchBitcoinDataCoinCap;
-                 success = await apiToCall();
-                 // Aktualizuj nazwę źródła w UI PO próbie pobrania
-                 const sourceName = config.bitcoin.currentApi === 'primary' ? config.bitcoin.primary.name : config.bitcoin.secondary.name;
-                 if (bitcoinApiSourceElement) bitcoinApiSourceElement.textContent = sourceName;
-                 return success;
+                 // Sprawdź stan przełącznika i wywołaj odpowiednie API
+                 if (config.bitcoin.currentApi === 'primary') {
+                     success = await fetchBitcoinDataCoinGecko();
+                 } else {
+                      success = await fetchBitcoinDataCoinPaprika(); // Użyj nowej funkcji
+                 }
+                  // Nie ma już automatycznego przełączania przy błędzie
+                 // Aktualizuj nazwę źródła w UI (zrobione w updateLastRefreshTime)
+                 // const sourceName = config.bitcoin.currentApi === 'primary' ? config.bitcoin.primary.name : config.bitcoin.secondary.name;
+                 // if (bitcoinApiSourceElement) bitcoinApiSourceElement.textContent = sourceName; // Robione w updateLastRefreshTime
+                 return success; // Zwróć status powodzenia/błędu
              };
              
             if (bitcoinApiToggleElement) {
                  bitcoinApiToggleElement.addEventListener('change', function() { // function() dla `this`
                      config.bitcoin.currentApi = this.checked ? 'secondary' : 'primary';
+                      // Aktualizuj nazwę źródła w config, jeśli jeszcze nie zrobione
+                      config.bitcoin.secondary.name = 'CoinPaprika'; // Upewnij się, że nazwa jest aktualna
                      fetchBitcoinData(); // Natychmiastowe odświeżenie po przełączeniu
                  });
+                  // Ustaw początkowy stan przełącznika i etykiety, jeśli trzeba
+                 const initialSourceName = config.bitcoin.currentApi === 'primary' ? config.bitcoin.primary.name : config.bitcoin.secondary.name;
+                 if (bitcoinApiSourceElement) bitcoinApiSourceElement.textContent = initialSourceName;
              }
              
             // --- Animacje i Efekty --- 
@@ -584,7 +626,8 @@ document.addEventListener('DOMContentLoaded', () => {
             // --- Inicjalizacja danych i interwałów ---
             fetchBitcoinData();
             fetchFearGreedIndex();
-            setInterval(fetchBitcoinData, config.bitcoin.primary.refreshInterval); // Używamy interwału głównego API
+            // Główny interwał odpytuje aktywne API co 30 sekund
+            setInterval(fetchBitcoinData, 30000); 
             setInterval(fetchFearGreedIndex, config.fearGreed.refreshInterval);
             setInterval(monitorPriceChanges, 1000);
             loadOpenPanelsState(); // Odtwórz panele po inicjalizacji mapy i reszty
