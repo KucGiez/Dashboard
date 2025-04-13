@@ -37,23 +37,23 @@ document.addEventListener('DOMContentLoaded', () => {
             ];
 
             const ExtendedMarketIndexes = {
-                US: [{ symbol: 'DJI', name: 'Dow Jones', flag: '🇺🇸' }, { symbol: 'SPX', name: 'S&P 500', flag: '🇺🇸' }, { symbol: 'IXIC', name: 'NASDAQ', flag: '🇺🇸' }, { symbol: 'RUT', name: 'Russell 2000', flag: '🇺🇸' }, { symbol: 'NYA', name: 'NYSE Composite', flag: '🇺🇸' }],
-                GB: [{ symbol: 'FTSE', name: 'FTSE 100', flag: '🇬🇧' }, { symbol: 'FTMC', name: 'FTSE 250', flag: '🇬🇧' }, { symbol: 'FTAI', name: 'FTSE AIM All-Share', flag: '🇬🇧' }],
-                DE: [{ symbol: 'GDAXI', name: 'DAX', flag: '🇩🇪' }, { symbol: 'MDAXI', name: 'MDAX', flag: '🇩🇪' }, { symbol: 'SDAXI', name: 'SDAX', flag: '🇩🇪' }],
-                JP: [{ symbol: 'N225', name: 'Nikkei 225', flag: '🇯🇵' }, { symbol: 'TOPX', name: 'TOPIX', flag: '🇯🇵' }, { symbol: 'JPN', name: 'JPX Nikkei 400', flag: '🇯🇵' }],
+                US: [{ symbol: '^DJI', name: 'Dow Jones', flag: '🇺🇸' }, { symbol: '^SPX', name: 'S&P 500', flag: '🇺🇸' }, { symbol: '^IXIC', name: 'NASDAQ', flag: '🇺🇸' }, { symbol: '^RUT', name: 'Russell 2000', flag: '🇺🇸' }, { symbol: '^NYA', name: 'NYSE Composite', flag: '🇺🇸' }],
+                GB: [{ symbol: '^FTSE', name: 'FTSE 100', flag: '🇬🇧' }, { symbol: '^FTMC', name: 'FTSE 250', flag: '🇬🇧' }, { symbol: '^FTAI', name: 'FTSE AIM All-Share', flag: '🇬🇧' }],
+                DE: [{ symbol: '^GDAXI', name: 'DAX', flag: '🇩🇪' }, { symbol: '^MDAXI', name: 'MDAX', flag: '🇩🇪' }, { symbol: '^SDAXI', name: 'SDAX', flag: '🇩🇪' }],
+                JP: [{ symbol: '^N225', name: 'Nikkei 225', flag: '🇯🇵' }, { symbol: '^TOPX', name: 'TOPIX', flag: '🇯🇵' }, { symbol: '^JPN', name: 'JPX Nikkei 400', flag: '🇯🇵' }],
                 CN: [{ symbol: '000001.SS', name: 'Shanghai Composite', flag: '🇨🇳' }, { symbol: '399001.SZ', name: 'Shenzhen Component', flag: '🇨🇳' }, { symbol: '000300.SS', name: 'CSI 300', flag: '🇨🇳' }],
                 RU: [{ symbol: 'IMOEX.ME', name: 'MOEX Russia', flag: '🇷🇺' }, { symbol: 'RTS.ME', name: 'RTS Index', flag: '🇷🇺' }],
-                AU: [{ symbol: 'AXJO', name: 'ASX 200', flag: '🇦🇺' }, { symbol: 'AXAT', name: 'ALL ORDINARIES', flag: '🇦🇺' }],
-                FR: [{ symbol: 'FCHI', name: 'CAC 40', flag: '🇫🇷' }], IN: [{ symbol: 'BSESN', name: 'BSE SENSEX', flag: '🇮🇳' }], HK: [{ symbol: 'HSI', name: 'Hang Seng', flag: '🇭🇰' }],
-                KR: [{ symbol: 'KS11', name: 'KOSPI', flag: '🇰🇷' }], BR: [{ symbol: 'BVSP', name: 'BOVESPA', flag: '🇧🇷' }], CA: [{ symbol: 'GSPTSE', name: 'S&P/TSX', flag: '🇨🇦' }],
-                ZA: [{ symbol: 'JSE.JO', name: 'JSE Top 40', flag: '🇿🇦' }], EG: [{ symbol: 'CASE30', name: 'EGX 30', flag: '🇪🇬' }], NG: [{ symbol: 'NGSE.NI', name: 'NSE All Share', flag: '🇳🇬' }],
+                AU: [{ symbol: '^AXJO', name: 'ASX 200', flag: '🇦🇺' }, { symbol: '^AXAT', name: 'ALL ORDINARIES', flag: '🇦🇺' }],
+                FR: [{ symbol: '^FCHI', name: 'CAC 40', flag: '🇫🇷' }], IN: [{ symbol: '^BSESN', name: 'BSE SENSEX', flag: '🇮🇳' }], HK: [{ symbol: '^HSI', name: 'Hang Seng', flag: '🇭🇰' }],
+                KR: [{ symbol: '^KS11', name: 'KOSPI', flag: '🇰🇷' }], BR: [{ symbol: '^BVSP', name: 'BOVESPA', flag: '🇧🇷' }], CA: [{ symbol: '^GSPTSE', name: 'S&P/TSX', flag: '🇨🇦' }],
+                ZA: [{ symbol: 'JSE.JO', name: 'JSE Top 40', flag: '🇿🇦' }], EG: [{ symbol: '^CASE30', name: 'EGX 30', flag: '🇪🇬' }], NG: [{ symbol: 'NGSE.NI', name: 'NSE All Share', flag: '🇳🇬' }],
                 KE: [{ symbol: 'NSE20.NR', name: 'NSE 20', flag: '🇰🇪' }], IL: [{ symbol: 'TA35.TA', name: 'TA-35', flag: '🇮🇱' }], TR: [{ symbol: 'XU100.IS', name: 'BIST 100', flag: '🇹🇷' }],
-                PL: [{ symbol: 'WIG20.WA', name: 'WIG20', flag: '🇵🇱' }], CH: [{ symbol: 'SSMI', name: 'SMI', flag: '🇨🇭' }], NL: [{ symbol: 'AEX', name: 'AEX', flag: '🇳🇱' }],
-                SE: [{ symbol: 'OMX', name: 'OMX Stockholm 30', flag: '🇸🇪' }], MX: [{ symbol: 'MXX', name: 'IPC MEXICO', flag: '🇲🇽' }], SG: [{ symbol: 'STI', name: 'Straits Times Index', flag: '🇸🇬' }],
-                TW: [{ symbol: 'TWII', name: 'TSEC Weighted Index', flag: '🇹🇼' }], NZ: [{ symbol: 'NZ50', name: 'NZX 50', flag: '🇳🇿' }], AR: [{ symbol: 'MERV', name: 'MERVAL', flag: '🇦🇷' }],
-                CL: [{ symbol: 'IPSA', name: 'S&P CLX IPSA', flag: '🇨🇱' }], ID: [{ symbol: 'JKSE', name: 'Jakarta Composite', flag: '🇮🇩' }], MY: [{ symbol: 'KLSE', name: 'FTSE Bursa Malaysia KLCI', flag: '🇲🇾' }],
-                TH: [{ symbol: 'SET.BK', name: 'SET Index', flag: '🇹🇭' }], SA: [{ symbol: 'TASI.SR', name: 'Tadawul All Share', flag: '🇸🇦' }], AE: [{ symbol: 'DFMGI.AE', name: 'DFM General Index', flag: '🇦🇪' }],
-                PT: [{ symbol: 'PSI20.LS', name: 'PSI 20', flag: '🇵🇹' }]
+                PL: [{ symbol: 'WIG20.WA', name: 'WIG20', flag: '🇵🇱' }], CH: [{ symbol: '^SSMI', name: 'SMI', flag: '🇨🇭' }], NL: [{ symbol: '^AEX', name: 'AEX', flag: '🇳🇱' }],
+                SE: [{ symbol: '^OMX', name: 'OMX Stockholm 30', flag: '🇸🇪' }], MX: [{ symbol: '^MXX', name: 'IPC MEXICO', flag: '🇲🇽' }], SG: [{ symbol: '^STI', name: 'Straits Times Index', flag: '🇸🇬' }],
+                TW: [{ symbol: '^TWII', name: 'TSEC Weighted Index', flag: '🇹🇼' }], NZ: [{ symbol: '^NZ50', name: 'NZX 50', flag: '🇳🇿' }], AR: [{ symbol: '^MERV', name: 'MERVAL', flag: '🇦🇷' }],
+                CL: [{ symbol: '^IPSA', name: 'S&P CLX IPSA', flag: '🇨🇱' }], ID: [{ symbol: '^JKSE', name: 'Jakarta Composite', flag: '🇮🇩' }], MY: [{ symbol: '^KLSE', name: 'FTSE Bursa Malaysia KLCI', flag: '🇲🇾' }],
+                TH: [{ symbol: '^SET.BK', name: 'SET Index', flag: '🇹🇭' }], SA: [{ symbol: '^TASI.SR', name: 'Tadawul All Share', flag: '🇸🇦' }], AE: [{ symbol: '^DFMGI.AE', name: 'DFM General Index', flag: '🇦🇪' }],
+                PT: [{ symbol: '^PSI20.LS', name: 'PSI 20', flag: '🇵🇹' }]
             };
 
             let regions = {};
@@ -123,10 +123,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const endpoint = sourceConfig.endpoint;
                 console.log(`Próba połączenia z ${sourceConfig.name} API Bitcoin:`, endpoint);
                 try {
-                    // Używamy serwera proxy CORS dla CoinGecko, aby uniknąć problemów z CORS
-                    const corsProxy = 'https://cors-anywhere.herokuapp.com/';
-                    const response = await fetch(corsProxy + endpoint);
-                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status} ${await response.text()}`);
+                    const response = await fetch(endpoint);
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status} ${await response.text()}`); // Dodaj tekst błędu
                     const data = await response.json();
                     const price = data.market_data?.current_price?.usd;
                     const change1h = data.market_data?.price_change_percentage_1h_in_currency?.usd;
@@ -280,10 +278,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 let errorOccurred = false;
 
                 const fetchIndexData = async (index) => {
-                    // Dodajemy ^ przed symbolem indeksu jeśli nie zawiera on kropki (specjalny format dla indeksów)
-                    const symbolFormatted = index.symbol.includes('.') ? index.symbol : `^${index.symbol}`;
-                    const endpoint = `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${symbolFormatted}&apikey=${apiKey}`;
-                    console.log(`Pobieranie danych dla ${index.name} (${symbolFormatted}) z Alpha Vantage...`);
+                    const endpoint = `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${index.symbol}&apikey=${apiKey}`;
+                    console.log(`Pobieranie danych dla ${index.name} (${index.symbol}) z Alpha Vantage...`);
                     try {
                         const response = await fetch(endpoint);
                         if (!response.ok) throw new Error(`HTTP error! status: ${response.status} ${await response.text()}`);
@@ -298,7 +294,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         const quote = data['Global Quote'];
                         if (!quote || Object.keys(quote).length === 0) {
                              // Czasem AV zwraca pusty obiekt zamiast błędu dla nieznanych symboli
-                             console.warn(`Brak danych (lub pusty obiekt) dla symbolu: ${symbolFormatted}`);
+                             console.warn(`Brak danych (lub pusty obiekt) dla symbolu: ${index.symbol}`);
                              return { price: "Brak danych", change1D: { text: "N/A", class: "" } };
                         }
 
@@ -308,7 +304,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         return { price, change1D };
 
                     } catch (error) {
-                        console.error(`Błąd pobierania danych dla ${index.name} (${symbolFormatted}):`, error);
+                        console.error(`Błąd pobierania danych dla ${index.name} (${index.symbol}):`, error);
                         errorOccurred = true; // Zaznacz, że wystąpił błąd
                         return { price: "Błąd API", change1D: { text: "N/A", class: "" }, errorMessage: error.message };
                     }
@@ -362,21 +358,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             polygonSeries.mapPolygons.template.states.create("hover", { fill: am5.color(0x546c8c) });
-            
-            // Poprawa aby tooltips działały
-            polygonSeries.set("heatRules", [{
-                target: polygonSeries.mapPolygons.template,
-                dataField: "value",
-                customFunction: function(polygon) {
-                    if (polygon.dataItem && polygon.dataItem.get("id")) {
-                        const countryId = polygon.dataItem.get("id");
-                        if (regions[countryId]) {
-                            polygon.set("fill", am5.color(regions[countryId].color));
-                            polygon.set("tooltipText", regions[countryId].name); // Upewniamy się, że tooltip jest ustawiony
-                        }
-                    }
-                }
-            }]);
 
             polygonSeries.events.on("datavalidated", () => {
                 console.log("Mapa została w pełni załadowana - inicjalizuję regiony");
@@ -592,12 +573,6 @@ document.addEventListener('DOMContentLoaded', () => {
                   // Ustaw początkowy stan przełącznika i etykiety, jeśli trzeba
                  const initialSourceName = config.bitcoin.currentApi === 'primary' ? config.bitcoin.primary.name : config.bitcoin.secondary.name;
                  if (bitcoinApiSourceElement) bitcoinApiSourceElement.textContent = initialSourceName;
-                 
-                 // Dodajemy lepszy opis przełącznika
-                 const label = bitcoinApiToggleElement.parentElement?.querySelector('label[for="bitcoin-api-toggle"]');
-                 if (label) {
-                    label.innerHTML = `Zmień źródło danych: <strong>${config.bitcoin.primary.name}</strong> / <strong>${config.bitcoin.secondary.name}</strong>`;
-                 }
              }
              
             // --- Animacje i Efekty --- 
