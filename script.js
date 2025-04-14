@@ -37,23 +37,23 @@ document.addEventListener('DOMContentLoaded', () => {
             ];
 
             const ExtendedMarketIndexes = {
-                US: [{ symbol: '^DJI', name: 'Dow Jones', flag: '🇺🇸' }, { symbol: '^SPX', name: 'S&P 500', flag: '🇺🇸' }, { symbol: '^IXIC', name: 'NASDAQ', flag: '🇺🇸' }, { symbol: '^RUT', name: 'Russell 2000', flag: '🇺🇸' }, { symbol: '^NYA', name: 'NYSE Composite', flag: '🇺🇸' }],
-                GB: [{ symbol: '^FTSE', name: 'FTSE 100', flag: '🇬🇧' }, { symbol: '^FTMC', name: 'FTSE 250', flag: '🇬🇧' }, { symbol: '^FTAI', name: 'FTSE AIM All-Share', flag: '🇬🇧' }],
-                DE: [{ symbol: '^GDAXI', name: 'DAX', flag: '🇩🇪' }, { symbol: '^MDAXI', name: 'MDAX', flag: '🇩🇪' }, { symbol: '^SDAXI', name: 'SDAX', flag: '🇩🇪' }],
-                JP: [{ symbol: '^N225', name: 'Nikkei 225', flag: '🇯🇵' }, { symbol: '^TOPX', name: 'TOPIX', flag: '🇯🇵' }, { symbol: '^JPN', name: 'JPX Nikkei 400', flag: '🇯🇵' }],
+                US: [{ symbol: 'DJI', name: 'Dow Jones', flag: '🇺🇸' }, { symbol: 'SPX', name: 'S&P 500', flag: '🇺🇸' }, { symbol: 'IXIC', name: 'NASDAQ', flag: '🇺🇸' }, { symbol: 'RUT', name: 'Russell 2000', flag: '🇺🇸' }, { symbol: 'NYA', name: 'NYSE Composite', flag: '🇺🇸' }],
+                GB: [{ symbol: 'FTSE', name: 'FTSE 100', flag: '🇬🇧' }, { symbol: 'FTMC', name: 'FTSE 250', flag: '🇬🇧' }, { symbol: 'FTAI', name: 'FTSE AIM All-Share', flag: '🇬🇧' }],
+                DE: [{ symbol: 'DAX', name: 'DAX', flag: '🇩🇪' }, { symbol: 'MDAXI', name: 'MDAX', flag: '🇩🇪' }, { symbol: 'SDAXI', name: 'SDAX', flag: '🇩🇪' }],
+                JP: [{ symbol: 'N225', name: 'Nikkei 225', flag: '🇯🇵' }, { symbol: 'TOPX', name: 'TOPIX', flag: '🇯🇵' }, { symbol: 'JPXN', name: 'JPX Nikkei 400', flag: '🇯🇵' }],
                 CN: [{ symbol: '000001.SS', name: 'Shanghai Composite', flag: '🇨🇳' }, { symbol: '399001.SZ', name: 'Shenzhen Component', flag: '🇨🇳' }, { symbol: '000300.SS', name: 'CSI 300', flag: '🇨🇳' }],
-                RU: [{ symbol: 'IMOEX.ME', name: 'MOEX Russia', flag: '🇷🇺' }, { symbol: 'RTS.ME', name: 'RTS Index', flag: '🇷🇺' }],
-                AU: [{ symbol: '^AXJO', name: 'ASX 200', flag: '🇦🇺' }, { symbol: '^AXAT', name: 'ALL ORDINARIES', flag: '🇦🇺' }],
-                FR: [{ symbol: '^FCHI', name: 'CAC 40', flag: '🇫🇷' }], IN: [{ symbol: '^BSESN', name: 'BSE SENSEX', flag: '🇮🇳' }], HK: [{ symbol: '^HSI', name: 'Hang Seng', flag: '🇭🇰' }],
-                KR: [{ symbol: '^KS11', name: 'KOSPI', flag: '🇰🇷' }], BR: [{ symbol: '^BVSP', name: 'BOVESPA', flag: '🇧🇷' }], CA: [{ symbol: '^GSPTSE', name: 'S&P/TSX', flag: '🇨🇦' }],
-                ZA: [{ symbol: 'JSE.JO', name: 'JSE Top 40', flag: '🇿🇦' }], EG: [{ symbol: '^CASE30', name: 'EGX 30', flag: '🇪🇬' }], NG: [{ symbol: 'NGSE.NI', name: 'NSE All Share', flag: '🇳🇬' }],
-                KE: [{ symbol: 'NSE20.NR', name: 'NSE 20', flag: '🇰🇪' }], IL: [{ symbol: 'TA35.TA', name: 'TA-35', flag: '🇮🇱' }], TR: [{ symbol: 'XU100.IS', name: 'BIST 100', flag: '🇹🇷' }],
-                PL: [{ symbol: 'WIG20.WA', name: 'WIG20', flag: '🇵🇱' }], CH: [{ symbol: '^SSMI', name: 'SMI', flag: '🇨🇭' }], NL: [{ symbol: '^AEX', name: 'AEX', flag: '🇳🇱' }],
-                SE: [{ symbol: '^OMX', name: 'OMX Stockholm 30', flag: '🇸🇪' }], MX: [{ symbol: '^MXX', name: 'IPC MEXICO', flag: '🇲🇽' }], SG: [{ symbol: '^STI', name: 'Straits Times Index', flag: '🇸🇬' }],
-                TW: [{ symbol: '^TWII', name: 'TSEC Weighted Index', flag: '🇹🇼' }], NZ: [{ symbol: '^NZ50', name: 'NZX 50', flag: '🇳🇿' }], AR: [{ symbol: '^MERV', name: 'MERVAL', flag: '🇦🇷' }],
-                CL: [{ symbol: '^IPSA', name: 'S&P CLX IPSA', flag: '🇨🇱' }], ID: [{ symbol: '^JKSE', name: 'Jakarta Composite', flag: '🇮🇩' }], MY: [{ symbol: '^KLSE', name: 'FTSE Bursa Malaysia KLCI', flag: '🇲🇾' }],
-                TH: [{ symbol: '^SET.BK', name: 'SET Index', flag: '🇹🇭' }], SA: [{ symbol: '^TASI.SR', name: 'Tadawul All Share', flag: '🇸🇦' }], AE: [{ symbol: '^DFMGI.AE', name: 'DFM General Index', flag: '🇦🇪' }],
-                PT: [{ symbol: '^PSI20.LS', name: 'PSI 20', flag: '🇵🇹' }]
+                RU: [{ symbol: 'IMOEX', name: 'MOEX Russia', flag: '��🇺' }, { symbol: 'RTSI', name: 'RTS Index', flag: '🇷🇺' }],
+                AU: [{ symbol: 'AXJO', name: 'ASX 200', flag: '🇦🇺' }, { symbol: 'AXAT', name: 'ALL ORDINARIES', flag: '🇦🇺' }],
+                FR: [{ symbol: 'FCHI', name: 'CAC 40', flag: '🇫🇷' }], IN: [{ symbol: 'BSESN', name: 'BSE SENSEX', flag: '🇮🇳' }], HK: [{ symbol: 'HSI', name: 'Hang Seng', flag: '🇭🇰' }],
+                KR: [{ symbol: 'KS11', name: 'KOSPI', flag: '🇰🇷' }], BR: [{ symbol: 'BVSP', name: 'BOVESPA', flag: '🇧🇷' }], CA: [{ symbol: 'GSPTSE', name: 'S&P/TSX', flag: '🇨🇦' }],
+                ZA: [{ symbol: 'J203.JO', name: 'JSE Top 40', flag: '🇿🇦' }], EG: [{ symbol: 'CASE30', name: 'EGX 30', flag: '🇪🇬' }], NG: [{ symbol: 'NGSEINDEX', name: 'NSE All Share', flag: '🇳🇬' }],
+                KE: [{ symbol: 'NSE20', name: 'NSE 20', flag: '🇰🇪' }], IL: [{ symbol: 'TA35', name: 'TA-35', flag: '🇮🇱' }], TR: [{ symbol: 'XU100', name: 'BIST 100', flag: '🇹🇷' }],
+                PL: [{ symbol: 'WIG20', name: 'WIG20', flag: '🇵🇱' }], CH: [{ symbol: 'SSMI', name: 'SMI', flag: '🇨🇭' }], NL: [{ symbol: 'AEX', name: 'AEX', flag: '🇳🇱' }],
+                SE: [{ symbol: 'OMX30', name: 'OMX Stockholm 30', flag: '🇸🇪' }], MX: [{ symbol: 'MXX', name: 'IPC MEXICO', flag: '🇲🇽' }], SG: [{ symbol: 'STI', name: 'Straits Times Index', flag: '🇸🇬' }],
+                TW: [{ symbol: 'TWII', name: 'TSEC Weighted Index', flag: '🇹🇼' }], NZ: [{ symbol: 'NZ50', name: 'NZX 50', flag: '🇳🇿' }], AR: [{ symbol: 'MERV', name: 'MERVAL', flag: '🇦🇷' }],
+                CL: [{ symbol: 'IPSA', name: 'S&P CLX IPSA', flag: '🇨🇱' }], ID: [{ symbol: 'JKSE', name: 'Jakarta Composite', flag: '🇮🇩' }], MY: [{ symbol: 'KLCI', name: 'FTSE Bursa Malaysia KLCI', flag: '🇲🇾' }],
+                TH: [{ symbol: 'SET', name: 'SET Index', flag: '🇹🇭' }], SA: [{ symbol: 'TASI', name: 'Tadawul All Share', flag: '🇸🇦' }], AE: [{ symbol: 'DFMGI', name: 'DFM General Index', flag: '🇦🇪' }],
+                PT: [{ symbol: 'PSI20', name: 'PSI 20', flag: '🇵🇹' }]
             };
 
             let regions = {};
@@ -118,7 +118,7 @@ document.addEventListener('DOMContentLoaded', () => {
             };
             
             // --- Funkcje API ---
-            const fetchBitcoinDataCoinGecko = async () => {
+            const fetchBitcoinDataCoinGecko = async (updatePriceAndChanges = true) => {
                 const sourceConfig = config.bitcoin.primary;
                 const endpoint = sourceConfig.endpoint;
                 console.log(`Próba połączenia z ${sourceConfig.name} API Bitcoin:`, endpoint);
@@ -126,40 +126,61 @@ document.addEventListener('DOMContentLoaded', () => {
                     const response = await fetch(endpoint);
                     if (!response.ok) throw new Error(`HTTP error! status: ${response.status} ${await response.text()}`); // Dodaj tekst błędu
                     const data = await response.json();
-                    const price = data.market_data?.current_price?.usd;
-                    const change1h = data.market_data?.price_change_percentage_1h_in_currency?.usd;
-                    const change24h = data.market_data?.price_change_percentage_24h_in_currency?.usd;
-                    const change7d = data.market_data?.price_change_percentage_7d_in_currency?.usd;
-                    const change30d = data.market_data?.price_change_percentage_30d_in_currency?.usd;
+                    
+                    // --- Zawsze próbuj zaktualizować dominację --- 
                     const dominance = data.market_data?.market_cap_percentage?.btc;
-                    if (price === undefined || change24h === undefined) throw new Error('Niekompletne dane z CoinGecko');
                     console.log("[CoinGecko] Dominance:", dominance); // Logowanie dominacji
+                    if (dominance !== undefined) {
+                        dataValueElements[3].textContent = `${dominance.toFixed(2)}%`;
+                        dataValueElements[3].className = "data-value"; 
+                    } else if (updatePriceAndChanges) { // Tylko resetuj, jeśli to główne zapytanie
+                        dataValueElements[3].textContent = "N/A";
+                        dataValueElements[3].className = "data-value";
+                    }
+                    // -------------------------------------------------
 
-                    // Aktualizacja UI
-                    btcPriceElement.textContent = formatPrice(price);
-                    const changeFormatted24h = formatChange(change24h);
-                    priceChangeElement.textContent = `${changeFormatted24h.text} (24h)`;
-                    priceChangeElement.className = `price-change ${changeFormatted24h.class}`;
-                    const intervals = [change1h, change7d, change30d];
-                    intervals.forEach((change, index) => {
-                        const formatted = formatChange(change);
-                        dataValueElements[index].textContent = formatted.text;
-                        dataValueElements[index].className = `data-value ${formatted.class}`;
-                    });
-                    dataValueElements[3].textContent = dominance !== undefined ? `${dominance.toFixed(2)}%` : "N/A";
-                    dataValueElements[3].className = "data-value"; // Reset klasy dla dominacji
+                    if (updatePriceAndChanges) { // Aktualizuj resztę tylko jeśli to wywołanie jest dla głównego API
+                         const price = data.market_data?.current_price?.usd;
+                         const change1h = data.market_data?.price_change_percentage_1h_in_currency?.usd;
+                         const change24h = data.market_data?.price_change_percentage_24h_in_currency?.usd;
+                         const change7d = data.market_data?.price_change_percentage_7d_in_currency?.usd;
+                         const change30d = data.market_data?.price_change_percentage_30d_in_currency?.usd;
+                         if (price === undefined || change24h === undefined) throw new Error('Niekompletne dane z CoinGecko');
 
-                    fetchTransactionFees(price); // Pobierz opłaty tylko jeśli główne dane są OK
-                    updateLastRefreshTime();
-                    return true; // Sukces
+                         // Aktualizacja UI (cena, zmiany, opłaty)
+                         btcPriceElement.textContent = formatPrice(price);
+                         const changeFormatted24h = formatChange(change24h);
+                         priceChangeElement.textContent = `${changeFormatted24h.text} (24h)`;
+                         priceChangeElement.className = `price-change ${changeFormatted24h.class}`;
+                         const intervals = [change1h, change7d, change30d];
+                         intervals.forEach((change, index) => {
+                             const formatted = formatChange(change);
+                             dataValueElements[index].textContent = formatted.text;
+                             dataValueElements[index].className = `data-value ${formatted.class}`;
+                         });
+
+                         fetchTransactionFees(price); // Pobierz opłaty tylko jeśli główne dane są OK
+                         updateLastRefreshTime(); // Aktualizuj czas i źródło (CoinGecko)
+                         return true; // Sukces dla głównego zapytania
+                    } else {
+                        return true; // Sukces dla pobrania samej dominacji
+                    }
                 } catch (error) {
-                     // Użyj nowej wersji handleFetchError
-                     handleFetchError(sourceConfig.name, `Błąd pobierania danych Bitcoin (${sourceConfig.name}):`, error);
-                    return false; // Błąd
+                     // Jeśli błąd wystąpił podczas próby pobrania tylko dominacji, zaloguj i kontynuuj
+                     if (!updatePriceAndChanges) {
+                          console.warn(`Nie udało się pobrać dominacji z CoinGecko: ${error.message}`);
+                          dataValueElements[3].textContent = "N/A"; // Ustaw N/A dla dominacji
+                          dataValueElements[3].className = "data-value";
+                          return false; // Błąd pobrania dominacji
+                     } else {
+                          // Błąd w głównym zapytaniu CoinGecko
+                          handleFetchError(sourceConfig.name, `Błąd pobierania danych Bitcoin (${sourceConfig.name}):`, error);
+                          return false; // Błąd
+                     }
                 }
             };
             
-             // NOWA funkcja dla CoinPaprika
+             // NOWA funkcja dla CoinPaprika (aktualizuje tylko cenę, zmiany, opłaty)
              const fetchBitcoinDataCoinPaprika = async () => {
                  const sourceConfig = config.bitcoin.secondary;
                  const endpoint = sourceConfig.endpoint;
@@ -268,7 +289,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const loadMarketIndexes = async (country, contentElement) => {
                 const indexes = ExtendedMarketIndexes[country] || [];
                 const apiKey = 'ZJPQUDLDPOVXN74F'; // Twój klucz API
-                const delayBetweenCalls = 13000; // Opóźnienie w ms (nieco ponad 12s dla bezpieczeństwa limitu 5/min)
+                const delayBetweenCalls = 15000; // Zwiększone opóźnienie do 15s
 
                 if (!contentElement) { console.error('Brak elementu docelowego dla indeksów'); return; }
                 if (indexes.length === 0) { contentElement.innerHTML = `<p>Brak skonfigurowanych indeksów dla ${country}</p>`; return; }
@@ -282,7 +303,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.log(`Pobieranie danych dla ${index.name} (${index.symbol}) z Alpha Vantage...`);
                     try {
                         const response = await fetch(endpoint);
-                        if (!response.ok) throw new Error(`HTTP error! status: ${response.status} ${await response.text()}`);
+                        if (!response.ok) {
+                             // Rzuć błąd dla błędów HTTP innych niż puste odpowiedzi
+                             throw new Error(`HTTP error! status: ${response.status} ${await response.text()}`);
+                        }
                         const data = await response.json();
 
                         if (data['Note']) { // Sprawdzenie notatki o limicie API
@@ -293,9 +317,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                         const quote = data['Global Quote'];
                         if (!quote || Object.keys(quote).length === 0) {
-                             // Czasem AV zwraca pusty obiekt zamiast błędu dla nieznanych symboli
-                             console.warn(`Brak danych (lub pusty obiekt) dla symbolu: ${index.symbol}`);
-                             return { price: "Brak danych", change1D: { text: "N/A", class: "" } };
+                           // Zwróć błąd, aby wyświetlić w UI
+                           console.warn(`Brak danych (lub pusty obiekt) dla symbolu: ${index.symbol}`);
+                           throw new Error(`Brak danych dla symbolu: ${index.symbol}`);
                         }
 
                         const price = quote['05. price'] ? formatPrice(parseFloat(quote['05. price'])) : "Brak danych";
@@ -353,8 +377,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 am5map.MapPolygonSeries.new(root, { geoJSON: am5geodata_worldLow, exclude: ["AQ"] })
             );
 
+            // Ustawienie tooltipText globalnie dla serii
             polygonSeries.mapPolygons.template.setAll({
-                 tooltipText: "{name}", toggleKey: "active", interactive: true, fill: am5.color(0x3b3b3b)
+                 tooltipText: "{name}", // Używa pola "name" z geoJSON
+                 toggleKey: "active", 
+                 interactive: true, 
+                 fill: am5.color(0x3b3b3b) // Domyślny kolor przed załadowaniem danych
             });
 
             polygonSeries.mapPolygons.template.states.create("hover", { fill: am5.color(0x546c8c) });
@@ -365,16 +393,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 colorIndex = 0;
                 am5.array.each(polygonSeries.dataItems, (dataItem) => {
                     const countryId = dataItem.get("id");
-                    const name = dataItem.get("name");
+                    const name = dataItem.get("name"); // Pobierz pełną nazwę z danych mapy
+                    // Zapisz pełną nazwę kraju w obiekcie regions
                     regions[countryId] = { name: name, color: getGhibliColor(colorIndex) };
                     const polygon = dataItem.get("mapPolygon");
                     if (polygon) {
                         polygon.set("fill", am5.color(regions[countryId].color)); // Użyj zapisanego koloru
+                        // Tooltip już ustawiony globalnie, ale można nadpisać, gdyby zaszła potrzeba
+                        // polygon.set("tooltipText", name); 
                         if (["US", "GB", "DE", "RU", "CN", "JP", "AU"].includes(countryId)) {
                             polygon.set("strokeWidth", 0.5);
                             polygon.set("stroke", am5.color(0xFFFFFF, 0.5));
                         }
-                        polygon.set("tooltipText", name);
                         polygon.set("interactive", true); // Upewnij się, że interaktywność jest włączona
                         
                         // Dodaj listener kliknięcia do każdego polygonu
@@ -450,7 +480,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 panel.id = `panel-${countryId}`;
                 panel.dataset.country = countryId;
                 const countryName = regions[countryId]?.name || `Kraj: ${countryId}`;
-                panel.querySelector('.panel-title').textContent = countryName;
+                panel.querySelector('.panel-title').textContent = regions[countryId]?.name || countryId;
                 
                 document.body.appendChild(panel);
                 makeDraggable(panel); // Użyj globalnej funkcji
@@ -549,26 +579,34 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // --- API Bitcoin - Przełącznik i Główna logika pobierania ---
              const fetchBitcoinData = async () => {
-                 let success;
-                 // Sprawdź stan przełącznika i wywołaj odpowiednie API
+                 // Krok 1: Zawsze próbuj pobrać dominację z CoinGecko
+                 const dominanceSuccess = await fetchBitcoinDataCoinGecko(false); // false = nie aktualizuj ceny/zmian
+ 
+                 // Krok 2: Pobierz resztę danych (cena, zmiany, opłaty) z aktywnego API
+                 let priceUpdateSuccess;
                  if (config.bitcoin.currentApi === 'primary') {
-                     success = await fetchBitcoinDataCoinGecko();
+                     // Jeśli CoinGecko jest aktywne, ale pobranie dominacji się nie udało, spróbuj ponownie całe zapytanie
+                     // Lub jeśli się udało, to po prostu reszta danych (w tym przypadku funkcja zwróci true bez ponownego fetch)
+                     // Ta logika jest wewnątrz fetchBitcoinDataCoinGecko(true)
+                     priceUpdateSuccess = await fetchBitcoinDataCoinGecko(true); 
                  } else {
-                      success = await fetchBitcoinDataCoinPaprika(); // Użyj nowej funkcji
+                     // Jeśli CoinPaprika jest aktywne, wywołaj ją
+                     priceUpdateSuccess = await fetchBitcoinDataCoinPaprika(); 
                  }
-                  // Nie ma już automatycznego przełączania przy błędzie
-                 // Aktualizuj nazwę źródła w UI (zrobione w updateLastRefreshTime)
-                 // const sourceName = config.bitcoin.currentApi === 'primary' ? config.bitcoin.primary.name : config.bitcoin.secondary.name;
-                 // if (bitcoinApiSourceElement) bitcoinApiSourceElement.textContent = sourceName; // Robione w updateLastRefreshTime
-                 return success; // Zwróć status powodzenia/błędu
+                 
+                 // Zwróć true jeśli aktualizacja ceny się powiodła (dominacja jest obsługiwana osobno)
+                 return priceUpdateSuccess;
              };
              
             if (bitcoinApiToggleElement) {
                  bitcoinApiToggleElement.addEventListener('change', function() { // function() dla `this`
                      config.bitcoin.currentApi = this.checked ? 'secondary' : 'primary';
-                      // Aktualizuj nazwę źródła w config, jeśli jeszcze nie zrobione
-                      config.bitcoin.secondary.name = 'CoinPaprika'; // Upewnij się, że nazwa jest aktualna
-                     fetchBitcoinData(); // Natychmiastowe odświeżenie po przełączeniu
+                     // Aktualizuj etykietę w UI
+                     const currentSourceName = config.bitcoin.currentApi === 'primary' ? config.bitcoin.primary.name : config.bitcoin.secondary.name;
+                     if (bitcoinApiSourceElement) bitcoinApiSourceElement.textContent = currentSourceName;
+                     // Aktualizuj nazwę źródła w config, jeśli jeszcze nie zrobione
+                     config.bitcoin.secondary.name = 'CoinPaprika'; // Upewnij się, że nazwa jest aktualna
+                    fetchBitcoinData(); // Natychmiastowe odświeżenie po przełączeniu
                  });
                   // Ustaw początkowy stan przełącznika i etykiety, jeśli trzeba
                  const initialSourceName = config.bitcoin.currentApi === 'primary' ? config.bitcoin.primary.name : config.bitcoin.secondary.name;
